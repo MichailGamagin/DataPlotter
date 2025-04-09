@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ICONS_DIR = BASE_DIR / 'resources'  
 DEFAULT_DIR = Path.home()
 DEFAULT_FILE_PATH = ""
-SAVE_FILE = BASE_DIR / "save.yaml"
+SAVE_FILE = Path(BASE_DIR / "resources" / 'default_save_files' / 'path_to_default_save.txt').read_text()
 ENCODING = "cp1251"
 COLORS = [
     "black",

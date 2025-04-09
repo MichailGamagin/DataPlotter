@@ -235,7 +235,6 @@ class WordSettings(QWidget):
             self.set_usr_settings()
 
     def set_default_settings(self):
-        
         self.font_combo.setCurrentText("Times New Roman")
         self.font_height_combo.setCurrentIndex(0)
         self.line_spacing_combo.setCurrentIndex(0)

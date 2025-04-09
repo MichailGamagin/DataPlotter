@@ -37,7 +37,6 @@ from src.gui.views.word.settings import WordSettings
 from src.utils.logger import Logger
 
 logger = Logger.get_logger(__name__)
-
 class MainWindow(QMainWindow):
     """
     Главное окно приложения для построения графиков.
@@ -177,15 +176,14 @@ class MainWindow(QMainWindow):
 
     def load_data(self):
         """Загружает данные из файла, указанного в self.path_ent"""
-        file_path = self.path_ent.text()
+        file_path = Path(self.path_ent.text()).resolve()
         logger.info(f"Попытка загрузки данных из файла: {file_path}")
         try:
-            if file_path.endswith(".yaml"):
+            if file_path.suffix =='.yaml':
                 with open(file_path, "r", encoding=ENCODING) as f:
                     state = yaml.load(f, Loader=yaml.FullLoader)
                     file_path = state.get("data_file_path", DEFAULT_FILE_PATH)
                     self.path_ent.setText(file_path)
-
             self.data = load_data_from(file_path, ENCODING)
             for page in self.pages:
                 for combo in page["left"].combos:
@@ -595,7 +593,7 @@ class MainWindow(QMainWindow):
         options |= QFileDialog.ReadOnly
         # options |= QFileDialog.DontUseNativeDialog
 
-        path = self.path_ent.text()
+        path = Path(self.path_ent.text()).resolve()
         if path:
             home_dir = Path(path).parent.as_posix()
         else:

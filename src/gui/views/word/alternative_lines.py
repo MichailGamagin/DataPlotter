@@ -154,7 +154,7 @@ class AlternativeLines(QtWidgets.QWidget):
                 graph_number = int(graph_name.split('№')[1])
                 self.stack.setCurrentIndex(graph_number - 1)
             except (IndexError, ValueError):
-                print(f"Ошибка обработки имени графика: {graph_name}")
+                logger.debug(f"Ошибка обработки имени графика: {graph_name}")
 
     def accept(self):
         self.get_text_from_textEdit()
@@ -165,7 +165,7 @@ class AlternativeLines(QtWidgets.QWidget):
         text = textEdit.toPlainText().strip()
         header = self.headers[current_page]
         self.cuptions[header] = text
-    
+
     def set_text_to_textEdit(self):
         # Загружаем данные из main_window.alternative_captions
         for i, header in enumerate(self.headers):
@@ -173,12 +173,11 @@ class AlternativeLines(QtWidgets.QWidget):
                 text = self.main_window.alternative_captions[header]
                 self.textEdits[f"{i}"].setText(text)
                 self.cuptions[header] = text
-            
+
     def save(self):
         # Сохраняем данные в main_window.alternative_captions
         for header, text in self.cuptions.items():
             self.main_window.alternative_captions[header] = text
-        print(self.main_window.alternative_captions)
 
 
 if __name__ == "__main__":
