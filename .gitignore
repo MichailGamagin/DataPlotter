@@ -10,7 +10,7 @@ __pycache__/
 
 legacy/
 *.yaml
-
+logs/
 
 # Distribution / packaging
 .Python
