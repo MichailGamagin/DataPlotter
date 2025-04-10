@@ -18,7 +18,9 @@ from PyQt5.QtWidgets import (
     QLabel,
     QMessageBox,
     QSizePolicy,
-    QShortcut
+    QShortcut,
+    QMenuBar,
+    QMenu,
 
 )
 from PyQt5.QtGui import QIcon, QKeySequence
@@ -74,6 +76,8 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         logger.info(f"Инициализация пользовательского интерфейса MainWindow")
+        self.menubar = self.menuBar()
+        file_menu = self.menubar.addMenu('Настройки')
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
         self.setStyleSheet(STACK_WIDGET_STYLE)
@@ -447,7 +451,6 @@ class MainWindow(QMainWindow):
 
     def save_state(self):
         options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
         path = self.path_ent.text()
         if path:
             home_dir = Path(path).parent.as_posix()
@@ -500,9 +503,10 @@ class MainWindow(QMainWindow):
 
             with open(file_name, "w", encoding="cp1251") as f:
                 yaml.dump(state, f, indent=2, allow_unicode=True)
+            self.write_path(file_name)
             logger.info(f"Состояние успешно сохранено в директорию {file_name}")
 
-    def _load_state(self, file_path=SAVE_FILE):
+    def _load_state(self, file_path=SAVE_FILE.read_text()):
         logger.info("Загрузка состояния...")
         try:
             logger.debug("Загрузка состояния...")
@@ -577,6 +581,7 @@ class MainWindow(QMainWindow):
                 self.stack.setCurrentIndex(0)
                 self.update_buttons()
                 self.pages[0]["left"].update_label()
+            self.write_path(file_path)
             logger.info("Состояние успешно загружено")
 
         except Exception as e:
@@ -674,6 +679,10 @@ class MainWindow(QMainWindow):
             self.current_page = original_page
             self.stack.setCurrentIndex(original_page)
             self.update_buttons()
+    def write_path(self, path):
+        """Перезаписывает путь к последнему файлу состояния"""
+        with open(SAVE_FILE, "w", encoding="cp1251") as f:
+            f.write(path)
 
 
 if __name__ == "__main__":

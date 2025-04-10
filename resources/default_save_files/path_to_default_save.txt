@@ -1,1 +1,1 @@
-C:\Users\gamagin_MV\Desktop\DataPlotter_v12\save.yaml
+C:\Users\gamagin_MV\Desktop\DataPlotter_v12\data\save.yaml

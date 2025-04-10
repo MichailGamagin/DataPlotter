@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ICONS_DIR = BASE_DIR / 'resources'  
 DEFAULT_DIR = Path.home()
 DEFAULT_FILE_PATH = ""
-SAVE_FILE = Path(BASE_DIR / "resources" / 'default_save_files' / 'path_to_default_save.txt').read_text()
+SAVE_FILE = Path(BASE_DIR / "resources" / "last_save" / "last_save.txt")
 ENCODING = "cp1251"
 COLORS = [
     "black",

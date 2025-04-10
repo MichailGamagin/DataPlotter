@@ -1,5 +1,4 @@
 from struct import unpack
-import yaml
 import pandas as pd
 import numpy as np
 
@@ -170,9 +169,10 @@ def load_data_from(path: str, enc: str):
 
 
 if __name__ == "__main__":
+    
     path_TRAP = BASE_DIR / 'data' + "\\test.csv"
     path_KORSAR = BASE_DIR / 'data' + "\\res_cyclic.txt"
     path_lent = BASE_DIR / 'data' + "\\lent3"
-    data = load_data_from(path_TRAP, enc="cp1251")
+    data = load_data_from(path_lent, enc="cp1251")
     # data = read_lent(path_lent)
     print(data)

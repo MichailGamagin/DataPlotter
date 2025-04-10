@@ -7,10 +7,11 @@ __pycache__/
 *.so
 
 # Docs 
-
+resources/last_save
 legacy/
 *.yaml
 logs/
+data/*.yaml
 
 # Distribution / packaging
 .Python
