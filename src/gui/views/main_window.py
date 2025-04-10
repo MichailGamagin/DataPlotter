@@ -21,6 +21,8 @@ from PyQt5.QtWidgets import (
     QShortcut,
     QMenuBar,
     QMenu,
+    QStatusBar,
+    QAction,
 
 )
 from PyQt5.QtGui import QIcon, QKeySequence
@@ -176,7 +178,14 @@ class MainWindow(QMainWindow):
         # self.setGeometry(300, 300, 1300, 700)
         self.setWindowIcon(QIcon(os.path.join(ICONS_DIR, "icons", "main_icon.png")))
         logger.info("Пользовательский интерфейс MainWindow успешно инициализирован")
+        
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
+        
         self.show()
+
+    def change_status(self, message):
+        self.statusBar.showMessage(str(message))
 
     def load_data(self):
         """Загружает данные из файла, указанного в self.path_ent"""
@@ -582,6 +591,7 @@ class MainWindow(QMainWindow):
                 self.update_buttons()
                 self.pages[0]["left"].update_label()
             self.write_path(file_path)
+            self.change_status(file_path)
             logger.info("Состояние успешно загружено")
 
         except Exception as e:
