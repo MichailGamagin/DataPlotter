@@ -11,8 +11,8 @@ resources/last_save
 legacy/
 *.yaml
 logs/
-data/*.yaml
 data/samples
+resources/icons
 # Distribution / packaging
 .Python
 build/

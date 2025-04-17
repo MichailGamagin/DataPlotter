@@ -23,13 +23,19 @@ from PyQt5.QtWidgets import (
     QMenu,
     QStatusBar,
     QAction,
-
 )
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt
 
 from src.gui.styles import MY_LINE_EDIT_STYLE, STACK_WIDGET_STYLE
-from src.core.constants import BASE_DIR, ENCODING, DEFAULT_FILE_PATH, SAVE_FILE, DEFAULT_DIR, ICONS_DIR
+from src.core.constants import (
+    BASE_DIR,
+    ENCODING,
+    DEFAULT_FILE_PATH,
+    SAVE_FILE,
+    DEFAULT_DIR,
+    ICONS_DIR,
+)
 
 from src.core.data_loader import load_data_from
 from src.gui.views.components.lyne_edit import MyLineEdit
@@ -42,6 +48,8 @@ from src.gui.views.word.word_export import Word
 from src.utils.logger import Logger
 
 logger = Logger.get_logger(__name__)
+
+
 class MainWindow(QMainWindow):
     """
     Главное окно приложения для построения графиков.
@@ -69,18 +77,8 @@ class MainWindow(QMainWindow):
         self.pages = []
         self.params = {}
         self.alternative_captions = {}
-        self.setFixedSize(1350, 750)
-        self.current_page = 0
-        self.data_file_path = DEFAULT_FILE_PATH
-        self.data = load_data_from(self.data_file_path, ENCODING)
-        self.init_ui()
-        self._load_state()
-        logger.info("Интерфейс MainWindow успешно инициализирован")
-
-    def init_ui(self):
-        logger.info(f"Инициализация пользовательского интерфейса MainWindow")
         self.menubar = self.menuBar()
-        file_menu = self.menubar.addMenu('Настройки')
+        file_menu = self.menubar.addMenu("Настройки")
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
         self.setStyleSheet(STACK_WIDGET_STYLE)
@@ -89,59 +87,99 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         # Navigation buttons
-        self.new_btn = QPushButton("")
-        self.new_btn.setIcon(QIcon(os.path.join(ICONS_DIR, "icons", "add_graph.png")))
-        self.new_btn.setToolTip("Добавить график")
-        self.new_btn.clicked.connect(self.add_page)
+        self.insert_page_left_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "insert_left.png")),
+            "Вставить график слева",
+            self,
+        )
+        self.insert_page_left_act.setToolTip("Вставить график слева")
+        self.insert_page_left_act.triggered.connect(self.insert_page_left)
 
-        self.prev_btn = QPushButton()
-        self.prev_btn.setIcon(QIcon(os.path.join(ICONS_DIR, "icons", "prev.png")))
-        self.prev_btn.setToolTip("Предыдущий график")
-        self.prev_btn.clicked.connect(self.prev_page)
-        self.shortcut_left = QShortcut(QKeySequence('Left'), self)
-        self.shortcut_left.activated.connect(self.prev_page)
+        self.add_page_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "add_graph.png")),
+            "Добавить график",
+            self,
+        )
+        self.add_page_act.setToolTip("Добавить график (в конец)")
+        self.add_page_act.triggered.connect(self.add_page)
+        
+        self.insert_page_right_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "insert_right.png")),
+            "Вставить график справа",
+            self,
+        )
+        self.insert_page_right_act.setToolTip("Вставить график справа")
+        self.insert_page_right_act.triggered.connect(self.insert_page_right)
+        
+        self.remove_page_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "remove.png")),
+            "Удалить график",
+            self,
+        )
+        self.remove_page_act.setToolTip("Удалить график")
+        self.remove_page_act.triggered.connect(self.remove_page)
+        
+        self.prev_page_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "prev.png")),
+            "Предыдущий график",
+            self,
+        )
+        self.prev_page_act.setToolTip("Предыдущий график")
+        self.prev_page_act.triggered.connect(self.prev_page)
+        
+        self.next_page_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "next.png")),
+            "Следующий график",
+            self,
+        )
+        self.next_page_act.setToolTip("Следующий график")
+        self.next_page_act.triggered.connect(self.next_page)
+        
+        self.save_all_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "save_all.png")),
+            "Сохранить все графики",
+            self,
+        )
+        self.save_all_act.setToolTip("Сохранить все графики")
+        self.save_all_act.triggered.connect(self.save_all)
+        
+        self.save_state_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "save_state.png")),
+            "Сохранить состояние",
+            self,
+        )
+        self.save_state_act.setToolTip("Сохранить состояние")
+        self.save_state_act.triggered.connect(self.save_state)
+        
+        self.load_state_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "load_state.png")),
+            "Загрузить состояние",
+            self,
+        )
+        self.load_state_act.setToolTip("Загрузить состояние")
+        self.load_state_act.triggered.connect(self.load_state)
+        
+        self.word_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "word.png")),
+            "Перенести графики в Word",
+            self,
+        )
+        self.word_act.setToolTip("Перенести графики в Word")
+        self.word_act.triggered.connect(self.export_to_word)
+        
+        self.word_settings_act = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "settings.jpg")),
+            "Настройки Word",
+            self,
+        )
+        self.word_settings_act.setToolTip("Настройки Word")
+        self.word_settings_act.triggered.connect(self.open_settings)
 
-        self.next_btn = QPushButton()
-        self.next_btn.setIcon(QIcon(os.path.join(ICONS_DIR, "icons", "next.png")))
-        self.next_btn.setToolTip("Следующий график")
-        self.next_btn.clicked.connect(self.next_page)
         self.shortcut_right = QShortcut(QKeySequence("Right"), self)
         self.shortcut_right.activated.connect(self.next_page)
+        self.shortcut_left = QShortcut(QKeySequence("Left"), self)
+        self.shortcut_left.activated.connect(self.prev_page)
 
-        self.save_all_btn = QPushButton("")
-        self.save_all_btn.clicked.connect(self.save_all)
-        self.save_all_btn.setIcon(
-            QIcon(os.path.join(ICONS_DIR, "icons", "save_all.png"))
-        )
-        self.save_all_btn.setToolTip("Сохранить все графики")
-
-        self.save_state_btn = QPushButton("")
-        self.save_state_btn.clicked.connect(self.save_state)
-        self.save_state_btn.setIcon(
-            QIcon(os.path.join(ICONS_DIR, "icons", "save_state.png"))
-        )
-        self.save_state_btn.setToolTip("Сохранить состояние")
-
-        self.load_state_btn = QPushButton("")
-        self.load_state_btn.clicked.connect(self.load_state)
-        self.load_state_btn.setIcon(
-            QIcon(os.path.join(ICONS_DIR, "icons", "load_state.png"))
-        )
-        self.load_state_btn.setToolTip("Загрузить состояние")
-
-        self.word_btn = QPushButton("")
-        self.word_btn.clicked.connect(self.export_to_word)
-        self.word_btn.setIcon(QIcon(os.path.join(ICONS_DIR, "icons", "word.png")))
-        self.word_btn.setToolTip("Перенести графики в Word")
-        self.word_settings_btn = QPushButton("")
-        self.word_settings_btn.clicked.connect(self.open_settings)
-        self.word_settings_btn.setIcon(
-            QIcon(os.path.join(ICONS_DIR, "icons", "settings.jpg"))
-        )
-        self.word_settings_btn.setToolTip("Настройки Word")
-
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         self.path_lbl = QLabel("Путь к файлу:")
         self.path_lbl.setStyleSheet(
@@ -152,20 +190,34 @@ class MainWindow(QMainWindow):
         self.path_ent.setMaximumWidth(600)
         self.path_ent.setAcceptDrops(True)
         self.path_ent.setStyleSheet(MY_LINE_EDIT_STYLE)
-        self.path_ent.editingFinished.connect(self.load_data)
 
-        toolbar.addWidget(self.new_btn)
+        self.setFixedSize(1350, 800)
+        self.current_page = 0
+        self.data_file_path = DEFAULT_FILE_PATH
+        self.data = load_data_from(self.data_file_path, ENCODING)
+        self.init_ui(toolbar)
+        self._load_state()
+        self.path_ent.returnPressed.connect(self.load_data)
+        logger.info("Интерфейс MainWindow успешно инициализирован")
+
+    def init_ui(self, toolbar):
+        logger.info(f"Инициализация пользовательского интерфейса MainWindow")
+        toolbar.addAction(self.insert_page_left_act)
+        toolbar.addAction(self.add_page_act)
+        toolbar.addAction(self.insert_page_right_act)
+        toolbar.addAction(self.remove_page_act)
         toolbar.addSeparator()
-        toolbar.addWidget(self.prev_btn)
-        toolbar.addWidget(self.next_btn)
+        toolbar.addAction(self.prev_page_act)
+        toolbar.addAction(self.next_page_act)
         toolbar.addSeparator()
-        toolbar.addWidget(self.save_state_btn)
-        toolbar.addWidget(self.load_state_btn)
+        toolbar.addAction(self.save_all_act)
+        toolbar.addAction(self.save_state_act)
+        toolbar.addAction(self.load_state_act)
+        toolbar.addAction(self.word_act)
         toolbar.addSeparator()
-        toolbar.addWidget(self.save_all_btn)
-        toolbar.addSeparator()
-        toolbar.addWidget(self.word_btn)
-        toolbar.addWidget(self.word_settings_btn)
+        toolbar.addAction(self.word_settings_act)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         toolbar.addWidget(spacer)
         toolbar.addWidget(self.path_lbl)
         toolbar.addWidget(self.path_ent)
@@ -179,21 +231,29 @@ class MainWindow(QMainWindow):
         # self.setGeometry(300, 300, 1300, 700)
         self.setWindowIcon(QIcon(os.path.join(ICONS_DIR, "icons", "main_icon.png")))
         logger.info("Пользовательский интерфейс MainWindow успешно инициализирован")
-
+        
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.show()
+        self.path_ent.clearFocus()
+        self.setFocus()
 
     def change_status(self, message):
-        """"Изменяет текст в статусбаре"""
+        """Изменяет текст в статусбаре"""
         self.statusBar.showMessage(str(message))
+    
+    def mousePressEvent(self, event):
+        """Устанавливает фокус на главное окно при клике мышью"""
+        self.setFocus()
+        super().mousePressEvent(event)
+
 
     def load_data(self):
         """Загружает данные из файла, указанного в self.path_ent"""
         file_path = Path(self.path_ent.text()).resolve()
         logger.info(f"Попытка загрузки данных из файла: {file_path}")
         try:
-            if file_path.suffix =='.yaml':
+            if file_path.suffix == ".yaml":
                 with open(file_path, "r", encoding=ENCODING) as f:
                     state = yaml.load(f, Loader=yaml.FullLoader)
                     file_path = state.get("data_file_path", DEFAULT_FILE_PATH)
@@ -214,8 +274,15 @@ class MainWindow(QMainWindow):
             logger.error(f"Файл данных не найден: {file_path}")
             QMessageBox.critical(self, "Ошибка", f"Файл данных не найден: {file_path}")
         except Exception as e:
-            logger.error(f"Ошибка при загрузке данных из файла: {file_path}. Текст ошибки: {str(e)}", exc_info=True)
-            QMessageBox.critical(self, "Ошибка", f"Ошибка при загрузке данных из файла: {file_path}\nТекст ошибки: {str(e)}")
+            logger.error(
+                f"Ошибка при загрузке данных из файла: {file_path}. Текст ошибки: {str(e)}",
+                exc_info=True,
+            )
+            QMessageBox.critical(
+                self,
+                "Ошибка",
+                f"Ошибка при загрузке данных из файла: {file_path}\nТекст ошибки: {str(e)}",
+            )
 
     def export_to_word(self):
         """Экспорт всех графиков в документ Word"""
@@ -300,11 +367,13 @@ class MainWindow(QMainWindow):
             if not progress.wasCanceled():
                 word_doc.save_doc(file_name)
                 QMessageBox.information(
-                self, "Успех", f"Графики успешно экспортированы в Word в директорию:\n{file_name}"
-            )
+                    self,
+                    "Успех",
+                    f"Графики успешно экспортированы в Word в директорию:\n{file_name}",
+                )
                 logger.info(
-                f"Графики успешно экспортированы в Word в директорию: {file_name}"
-            )
+                    f"Графики успешно экспортированы в Word в директорию: {file_name}"
+                )
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Ошибка экспорта: {str(e)}")
 
@@ -316,11 +385,14 @@ class MainWindow(QMainWindow):
             self.update_buttons()
 
     def open_settings(self):
+        """Открывает окно настроек Word"""
         self.word_settings = WordSettings(parent=self)
         self.word_settings.setWindowModality(Qt.ApplicationModal)
         self.word_settings.show()
 
     def add_page(self):
+        """Добавляет новую страницу в стек виджетов."""
+
         logger.info(f"Добавление страницы")
         page = QWidget()
         layout = QHBoxLayout(page)
@@ -343,10 +415,74 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(self.current_page)
         logger.info(f"Добавлена страница №{self.current_page + 1}")
 
-    def update_buttons(self):
-        self.prev_btn.setEnabled(self.current_page > 0)
-        self.next_btn.setEnabled(self.current_page < len(self.pages) - 1)
+    def remove_page(self):
+        logger.info(f"Удаление страницы")
+        if len(self.pages) > 1:
+            page_to_remove = self.pages.pop(self.current_page)
+            self.stack.removeWidget(page_to_remove["widget"])
+            page_to_remove["widget"].deleteLater()
+            if self.current_page >= len(self.pages):
+                self.current_page = len(self.pages) - 1
+            self.stack.setCurrentIndex(self.current_page)
+            self.pages[self.current_page]["left"].update_label()
+            self.update_buttons()
+            logger.info(f"Удалена страница №{self.current_page + 1}")
+        else:
+            msg = MessageWindow("Невозможно удалить", "Невозможно удалить последнюю страницу")
+            msg.exec_()
 
+    def insert_page_right(self):
+        logger.info(f"Добавление страницы")
+        page = QWidget()
+        layout = QHBoxLayout(page)
+        vlayout = QVBoxLayout()
+
+        left_panel = LeftPanel(self.data, self)
+        plot_area = PlotArea(self.data, self)
+
+        vlayout.addWidget(left_panel, 1)
+        vlayout.addStretch(10)
+        layout.addLayout(vlayout, 1)
+        layout.addWidget(plot_area, 4)
+        self.current_page = self.current_page + 1
+        self.pages.insert(
+            self.current_page, {"widget": page, "left": left_panel, "right": plot_area}
+        )
+        self.stack.insertWidget(self.current_page, page)
+        self.stack.setCurrentIndex(self.current_page)
+        self.pages[self.current_page]["left"].update_label()
+        self.update_buttons()
+        logger.info(f"Добавлена страница №{self.current_page + 1}")
+
+    def insert_page_left(self):
+        logger.info(f"Добавление страницы")
+        page = QWidget()
+        layout = QHBoxLayout(page)
+        vlayout = QVBoxLayout()
+
+        left_panel = LeftPanel(self.data, self)
+        plot_area = PlotArea(self.data, self)
+
+        vlayout.addWidget(left_panel, 1)
+        vlayout.addStretch(10)
+        layout.addLayout(vlayout, 1)
+        layout.addWidget(plot_area, 4)
+        self.current_page = self.current_page
+        self.pages.insert(
+            self.current_page, {"widget": page, "left": left_panel, "right": plot_area}
+        )
+        self.stack.insertWidget(self.current_page, page)
+        self.stack.setCurrentIndex(self.current_page)
+        self.pages[self.current_page]["left"].update_label()
+        self.update_buttons()
+        logger.info(f"Добавлена страница №{self.current_page + 1}")
+
+    def update_buttons(self):
+        self.prev_page_act.setEnabled(self.current_page > 0)
+        self.next_page_act.setEnabled(self.current_page < len(self.pages) - 1)
+        self.insert_page_left_act.setEnabled(self.current_page > 0)
+        self.insert_page_right_act.setEnabled(self.current_page < len(self.pages))
+        self.remove_page_act.setEnabled(len(self.pages) > 1)
     def update_graph(self):
         combos = self.pages[self.current_page]["left"].combos
         for i in range(len(combos)):
@@ -417,7 +553,9 @@ class MainWindow(QMainWindow):
                         "X": str(page_data["right"].x_settings.currentText()),
                         "Y": str(page_data["right"].y_settings.text()),
                         "Frequency": str(page_data["right"].markers.currentText()),
-                        "X_grid_lines": str(page_data["right"].x_spacing_grid_spinBox.value()),
+                        "X_grid_lines": str(
+                            page_data["right"].x_spacing_grid_spinBox.value()
+                        ),
                     },
                     "Lists": [],
                     "alternative_caption": alternative_caption,
@@ -483,9 +621,8 @@ class MainWindow(QMainWindow):
                 current_page["right"].markers.setCurrentText(
                     page_state["Axis_settings"]["Frequency"]
                 )
-                current_page["right"].x_spacing_grid_spinBox.setValue(int(
-                    page_state["Axis_settings"]["X_grid_lines"]
-                )
+                current_page["right"].x_spacing_grid_spinBox.setValue(
+                    int(page_state["Axis_settings"]["X_grid_lines"])
                 )
                 current_page["right"].group.setCurrentText(page_state["Symbol"][0])
                 current_page["right"].sizing_cmb.setCurrentText(page_state["Symbol"][1])
@@ -497,7 +634,9 @@ class MainWindow(QMainWindow):
 
                 # Загрузка альтернативной подписи
                 graph_header = f"{page_state['Number_graph']}"
-                self.alternative_captions[graph_header] = page_state.get("alternative_caption", "")
+                self.alternative_captions[graph_header] = page_state.get(
+                    "alternative_caption", ""
+                )
                 self.update_graph()
                 QApplication.processEvents()
 
@@ -601,7 +740,9 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Ошибка сохранения: {str(e)}")
-            logger.error(f"Ошибка при сохранении всех графиков: {str(e)}", exc_info=True)
+            logger.error(
+                f"Ошибка при сохранении всех графиков: {str(e)}", exc_info=True
+            )
         finally:
             self.current_page = original_page
             self.stack.setCurrentIndex(original_page)

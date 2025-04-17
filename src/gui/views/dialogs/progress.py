@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QProgressBar
 )
 
-from src.core.constants import BASE_DIR
+from src.core.constants import ICONS_DIR
 from src.gui.styles import STYLE_PROGRESS_BAR
 from src.utils.logger import Logger
 
@@ -29,8 +29,8 @@ class MyProgressDialog(QProgressDialog):
         super().__init__()
         logger.info("Инициализация MyProgressDialog")
         self.setWindowTitle(title)
-        self.setWindowIcon(QtGui.QIcon(os.path.join(BASE_DIR, "icons", "info.png")))
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowIcon(QtGui.QIcon(os.path.join(ICONS_DIR, "icons", "info.png")))
+        self.setWindowModality(Qt.ApplicationModal)
         self.setAutoClose(True)
         self.setAutoReset(True)
         self.setMinimumDuration(0) # чтобы сразу показывался
@@ -43,6 +43,8 @@ class MyProgressDialog(QProgressDialog):
         self.setBar(self.bar)
         self.setFixedSize(650, 100)
         self.setLabelText(label_text)
+
+        self.setModal(True)
         logger.info("Инициализация MyProgressDialog успшено заверешена")
         
 

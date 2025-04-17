@@ -30,7 +30,7 @@ def data_KORSAR(path: str, enc: str) -> pd.DataFrame:
 
 def data_TRAP_csv(path: str) -> pd.DataFrame | None:
     """
-    Считывает данные из выходного файла TRAP в формате csv.
+    Считывает данные из выходного файла Korr_v49 в формате csv.
     
     Args:
         path (str): Путь к файлу.
