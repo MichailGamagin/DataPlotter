@@ -181,10 +181,10 @@ class MainWindow(QMainWindow):
         
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
-        
         self.show()
 
     def change_status(self, message):
+        """"Изменяет текст в статусбаре"""
         self.statusBar.showMessage(str(message))
 
     def load_data(self):
@@ -312,7 +312,7 @@ class MainWindow(QMainWindow):
             list_style = obj_styles.add_style("ListStyle", WD_STYLE_TYPE.PARAGRAPH)
             list_style.base_style = obj_styles["Normal"]
             list_style.font.name = self.params.get("font", "Times New Roman")
-            list_style.font.size =  font_size
+            list_style.font.size = font_size
             # Добавляем изменение межстрочного интервала и интервалов до и после
             paragraph_format = list_style.paragraph_format
             if line_spacing == "Одинарный":
@@ -689,6 +689,7 @@ class MainWindow(QMainWindow):
             self.current_page = original_page
             self.stack.setCurrentIndex(original_page)
             self.update_buttons()
+
     def write_path(self, path):
         """Перезаписывает путь к последнему файлу состояния"""
         with open(SAVE_FILE, "w", encoding="cp1251") as f:
