@@ -12,7 +12,7 @@ legacy/
 *.yaml
 logs/
 data/*.yaml
-
+data/samples
 # Distribution / packaging
 .Python
 build/

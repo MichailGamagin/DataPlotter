@@ -38,6 +38,7 @@ from src.gui.views.components.plot_area import PlotArea
 from src.gui.views.dialogs.message import MessageWindow
 from src.gui.views.dialogs.progress import MyProgressDialog
 from src.gui.views.word.settings import WordSettings
+from src.gui.views.word.word_export import Word
 from src.utils.logger import Logger
 
 logger = Logger.get_logger(__name__)
@@ -178,7 +179,7 @@ class MainWindow(QMainWindow):
         # self.setGeometry(300, 300, 1300, 700)
         self.setWindowIcon(QIcon(os.path.join(ICONS_DIR, "icons", "main_icon.png")))
         logger.info("Пользовательский интерфейс MainWindow успешно инициализирован")
-        
+
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.show()
@@ -218,13 +219,8 @@ class MainWindow(QMainWindow):
 
     def export_to_word(self):
         """Экспорт всех графиков в документ Word"""
-        from docx import Document
-        from docx.shared import Pt, Cm
-        from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
-        from docx.enum.style import WD_STYLE_TYPE
         # Запрос пути сохранения
         options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
         path = self.path_ent.text()
         if path:
             home_dir = Path(path).parent.as_posix()
@@ -241,159 +237,80 @@ class MainWindow(QMainWindow):
         if not file_name:
             return
         logger.info(f"Сохранение графиков в Word в директорию: {file_name}")
-
+        progress = MyProgressDialog(title="Сохранение документа", parent=self)
+        progress.show()
         try:
             # Сохраняем текущую страницу
             original_page = self.current_page
             # Махинации с Word
-            doc = Document()
-            section = doc.sections[0]
-            section.top_margin = Cm(1)
-            section.bottom_margin = Cm(1)
+            word_doc = Word()
+            # Отступы
+            word_doc.set_margin()
             # Основной стиль документа
-            style = doc.styles["Normal"]
-            style.font.name = self.params.get("font", "Times New Roman")
-            font_size = self.params.get("font-size", "11")
-            int_after = self.params.get("int-after", "0")
-            int_before = self.params.get("int-before", "0")
-            pic_width = self.params.get("pic-width", "16.0")
-            pic_height = self.params.get("pic-height", "9.5")
-            line_spacing = self.params.get("line-spacing", 'Одинарный')
-            if isinstance(font_size, (str, float, int)):
-                try:
-                    font_size = Pt(float(font_size))
-                except ValueError:
-                    font_size = Pt(11)
-                    msg = MessageWindow(
-                        f"Ошибка в размере шрифта",
-                    )
-                    msg.exec_()
-            if isinstance(int_after, (int, float)):
-                try:
-                    int_after = Pt(float(int_after))
-                except ValueError:
-                    int_after = Pt(0)
-                    msg = MessageWindow(
-                        f"Ошибка в интервале после",
-                    )
-                    msg.exec_()
-            if isinstance(int_before, (int, float)):
-                try:
-                    int_before = Pt(float(int_before))
-                except ValueError:
-                    int_before = Pt(0)
-                    msg = MessageWindow(
-                        f"Ошибка в интервале до",
-                    )
-                    msg.exec_()
-            if isinstance(pic_width, (str, int, float)):
-                try:
-                    pic_width = Cm(float(pic_width))
-                except ValueError:
-                    pic_width = Cm(16.0)
-                    msg = MessageWindow(
-                        f"Ошибка в ширине рисунка",
-                        'Установлена ширина 16.0 см',
-                    )
-                    msg.exec_()
-            if isinstance(pic_height, (str, int, float)):
-                try:
-                    pic_height = Cm(float(pic_height))
-                except ValueError:
-                    pic_height = Cm(9.5)
-                    msg = MessageWindow(
-                        f"Ошибка в высоте рисунка", 
-                        "Установлена высота 9.5 см",
-                    )
-                    msg.exec_()
-            style.font.size = font_size
-            # Стиль списка линий под подписью рисунка
-            obj_styles = doc.styles
-            list_style = obj_styles.add_style("ListStyle", WD_STYLE_TYPE.PARAGRAPH)
-            list_style.base_style = obj_styles["Normal"]
-            list_style.font.name = self.params.get("font", "Times New Roman")
-            list_style.font.size = font_size
-            # Добавляем изменение межстрочного интервала и интервалов до и после
-            paragraph_format = list_style.paragraph_format
-            if line_spacing == "Одинарный":
-                paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-            else:
-                paragraph_format.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
-            paragraph_format.space_after = int_after
-            paragraph_format.space_before = int_before
+            word_doc.set_style_document()
+            # Стиль подрисуночной подписи
+            word_doc.set_style_list(
+                font=self.params.get("font", "Times New Roman"),
+                font_size=self.params.get("font-size", "11"),
+                line_spacing=self.params.get("line-spacing", "Одинарный"),
+                int_before=self.params.get("int-before", "0"),
+                int_after=self.params.get("int-after", "0"),
+            )
             # Временная папка для изображений
             temp_dir = Path("./temp_grf")
             temp_dir.mkdir(exist_ok=True, parents=True)
-
+            progress.setMaximum(len(self.pages))
             for idx, page in enumerate(self.pages):
+                progress.setValue(idx)
                 # Переключаемся на страницу
                 self.current_page = idx
                 self.stack.setCurrentIndex(idx)
                 QApplication.processEvents()
-
+                if progress.wasCanceled():
+                    break
                 # Обновляем график
                 self.update_graph()
                 page["right"].canvas.draw_idle()
                 QApplication.processEvents()
-
                 # Сохраняем временное изображение
                 img_path = temp_dir / f"graph_{idx}.png"
                 page["right"].canvas.figure.savefig(img_path, dpi=300)
-
                 # Добавляем в документ
                 # 1. Изображение
-                para_img = doc.add_paragraph()
-                para_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run = para_img.add_run()
-                run.add_picture(str(img_path), width=pic_width, height=pic_height)
-
-                # Получаем подписи линий
+                word_doc.add_image(
+                    img_path,
+                    pic_width=self.params.get("pic-width", "16.0"),
+                    pic_height=self.params.get("pic-height", "9.5"),
+                )
+                # 2. Подписи к изображениям
+                labels = [
+                    combo.currentText().split(",")[0].strip()
+                    for combo in page["left"].combos
+                    if combo.currentText()
+                ]
                 graph_header = f"График №{idx + 1}"
                 alternative_caption = self.alternative_captions.get(graph_header)
-
-                list_item = doc.add_paragraph()
-                list_item.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                list_item.style = list_style
-
-                if alternative_caption:
-                    list_item.add_run(alternative_caption)
-                else:
-                    labels = [
-                        combo.currentText().split(",")[0].strip()
-                        for combo in page["left"].combos
-                        if combo.currentText()
-                    ]
-                    for i, label in enumerate(labels, 1):
-                        list_item.add_run(f"{i} - {label}")
-                        if i < len(labels):
-                            list_item.add_run("\n")
-
-                caption = doc.add_paragraph()
-                caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                caption_text = f'{self.params["pict"]} {self.params["num-section"]}.{int(self.params["first-pic"])+idx} - {self.params["mode-name"]}'
-                caption.add_run(caption_text).bold = False
-                caption.style = list_style
-
+                word_doc.set_caption(idx, labels, self.params, alternative_caption)
             # Удаляем временные файлы
             for f in temp_dir.glob("*.png"):
                 f.unlink()
             temp_dir.rmdir()
 
             # Сохраняем документ
-            if not file_name.endswith('.docx'):
-                file_name = file_name + '.docx'
-            doc.save(file_name)
-            QMessageBox.information(
+            if not progress.wasCanceled():
+                word_doc.save_doc(file_name)
+                QMessageBox.information(
                 self, "Успех", f"Графики успешно экспортированы в Word в директорию:\n{file_name}"
             )
-            logger.info(
+                logger.info(
                 f"Графики успешно экспортированы в Word в директорию: {file_name}"
             )
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Ошибка экспорта: {str(e)}")
 
         finally:
-            # Восстанавливаем состояние
+            # Восстанавливаем ранее открытую страницу
+            progress.close()
             self.current_page = original_page
             self.stack.setCurrentIndex(original_page)
             self.update_buttons()
