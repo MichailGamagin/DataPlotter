@@ -39,6 +39,8 @@ class WordSettings(QWidget):
     def __init__(self, parent = None):
         super().__init__()
         logger.info('Инициализация WordSettings')
+
+        # self.setFixedSize(1350, 800)
         self.parent = parent
         self.params = self.parent.params
         self.setWindowTitle('Настройка Word')
@@ -204,6 +206,7 @@ class WordSettings(QWidget):
         self.setLayout(self.central_layout)
         self.setWindowIcon(QIcon(os.path.join(ICONS_DIR, "icons", "settings.jpg")))
         self.retranslateUi()
+        self.setFixedSize(QtCore.QSize(515, 360))
         logger.info('Инициализация WordSettings успешно завершена')
 
     def retranslateUi(self):

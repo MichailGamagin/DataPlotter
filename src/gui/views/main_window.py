@@ -102,7 +102,7 @@ class MainWindow(QMainWindow):
         )
         self.add_page_act.setToolTip("Добавить график (в конец)")
         self.add_page_act.triggered.connect(self.add_page)
-        
+
         self.insert_page_right_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "insert_right.png")),
             "Вставить график справа",
@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
         )
         self.insert_page_right_act.setToolTip("Вставить график справа")
         self.insert_page_right_act.triggered.connect(self.insert_page_right)
-        
+
         self.remove_page_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "remove.png")),
             "Удалить график",
@@ -118,7 +118,7 @@ class MainWindow(QMainWindow):
         )
         self.remove_page_act.setToolTip("Удалить график")
         self.remove_page_act.triggered.connect(self.remove_page)
-        
+
         self.prev_page_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "prev.png")),
             "Предыдущий график",
@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
         )
         self.prev_page_act.setToolTip("Предыдущий график")
         self.prev_page_act.triggered.connect(self.prev_page)
-        
+
         self.next_page_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "next.png")),
             "Следующий график",
@@ -134,7 +134,7 @@ class MainWindow(QMainWindow):
         )
         self.next_page_act.setToolTip("Следующий график")
         self.next_page_act.triggered.connect(self.next_page)
-        
+
         self.save_all_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "save_all.png")),
             "Сохранить все графики",
@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
         )
         self.save_all_act.setToolTip("Сохранить все графики")
         self.save_all_act.triggered.connect(self.save_all)
-        
+
         self.save_state_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "save_state.png")),
             "Сохранить состояние",
@@ -150,7 +150,7 @@ class MainWindow(QMainWindow):
         )
         self.save_state_act.setToolTip("Сохранить состояние")
         self.save_state_act.triggered.connect(self.save_state)
-        
+
         self.load_state_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "load_state.png")),
             "Загрузить состояние",
@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
         )
         self.load_state_act.setToolTip("Загрузить состояние")
         self.load_state_act.triggered.connect(self.load_state)
-        
+
         self.word_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "word.png")),
             "Перенести графики в Word",
@@ -166,7 +166,7 @@ class MainWindow(QMainWindow):
         )
         self.word_act.setToolTip("Перенести графики в Word")
         self.word_act.triggered.connect(self.export_to_word)
-        
+
         self.word_settings_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "settings.jpg")),
             "Настройки Word",
@@ -180,7 +180,6 @@ class MainWindow(QMainWindow):
         self.shortcut_left = QShortcut(QKeySequence("Left"), self)
         self.shortcut_left.activated.connect(self.prev_page)
 
-
         self.path_lbl = QLabel("Путь к файлу:")
         self.path_lbl.setStyleSheet(
             "color: black;\n" "font-size: 14px;\n" "font-weight: 700;"
@@ -191,7 +190,7 @@ class MainWindow(QMainWindow):
         self.path_ent.setAcceptDrops(True)
         self.path_ent.setStyleSheet(MY_LINE_EDIT_STYLE)
 
-        self.setFixedSize(1350, 800)
+        # self.setFixedSize(1350, 800)
         self.current_page = 0
         self.data_file_path = DEFAULT_FILE_PATH
         self.data = load_data_from(self.data_file_path, ENCODING)
@@ -230,8 +229,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Data Plotter")
         # self.setGeometry(300, 300, 1300, 700)
         self.setWindowIcon(QIcon(os.path.join(ICONS_DIR, "icons", "main_icon.png")))
+        self.word_settings = WordSettings(parent=self).accept()
         logger.info("Пользовательский интерфейс MainWindow успешно инициализирован")
-        
+
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.show()
@@ -241,12 +241,11 @@ class MainWindow(QMainWindow):
     def change_status(self, message):
         """Изменяет текст в статусбаре"""
         self.statusBar.showMessage(str(message))
-    
+
     def mousePressEvent(self, event):
         """Устанавливает фокус на главное окно при клике мышью"""
         self.setFocus()
         super().mousePressEvent(event)
-
 
     def load_data(self):
         """Загружает данные из файла, указанного в self.path_ent"""

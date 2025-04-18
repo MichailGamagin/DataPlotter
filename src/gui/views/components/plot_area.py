@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QFileDialog,
     QSpinBox,
+    QSizePolicy,
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon
@@ -39,7 +40,7 @@ from src.utils.logger import Logger
 logger = Logger.get_logger(__name__)
 
 
-class PlotCanvas(FigureCanvas):
+class PlotCanvas(FigureCanvas, QWidget):
     """
     Виджет для отображения графика.
 
@@ -107,9 +108,10 @@ class PlotArea(QWidget):
 
         # Top controls
         self.top_controls_panel = QWidget()
+        self.top_controls_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.top_controls_layout = QGridLayout(self.top_controls_panel)
         self.top_controls_layout.setContentsMargins(0, 0, 0, 0)
-        self.top_controls_layout.setVerticalSpacing(0)
+        self.top_controls_layout.setVerticalSpacing(10)
         self.top_controls_layout.setHorizontalSpacing(10)
 
         # Создаем виджеты
@@ -224,6 +226,7 @@ class PlotArea(QWidget):
         self.toolbar_and_buttons_layout.setContentsMargins(0, 0, 0, 0)
 
         self.canvas = PlotCanvas()
+        self.canvas.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         # self.setFixedHeight(600)
         self.toolbar = MyNavigationToolbar(
             self.canvas, self.canvas, self, coordinates=False
