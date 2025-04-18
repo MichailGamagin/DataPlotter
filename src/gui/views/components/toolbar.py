@@ -4,10 +4,9 @@ from src.utils.logger import Logger
 logger = Logger.get_logger(__name__)
 
 class MyNavigationToolbar(NavigationToolbar):
+    """Кастомный тулбар для графика Matplotlib"""
     toolitems = (
         ("Домой", "Вернуться к исходному виду", "home", "my_home"),
-        # ('Назад', 'Назад к предыдущему виду', 'back', 'back'),
-        # ('Вперед', 'Вперед к следующему виду', 'forward', 'forward'),
         (
             "Панорамирование",
             "Перемещение осей левой кнопкой, масштабирование правой",
@@ -15,7 +14,6 @@ class MyNavigationToolbar(NavigationToolbar):
             "pan",
         ),
         ("Масштаб", "Масштабировать прямоугольником", "zoom_to_rect", "zoom"),
-        # ('Сохранить', 'Сохранить изображение', 'filesave', 'save_figure'),
     )
     def __init__(self, canvas, parent, plot_area, coordinates=True):
         logger.info('Инициализация MyNavigationToolbar')
@@ -26,6 +24,7 @@ class MyNavigationToolbar(NavigationToolbar):
         logger.info('Инициализация MyNavigationToolbar успешно завершена')
 
     def my_home(self):
+        """Обработчик нажатия на кнопку Домой"""
         params = self.plot_area.get_current_params()
         time = self.plot_area.data.columns[0]
         key = tuple(params)

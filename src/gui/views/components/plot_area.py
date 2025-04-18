@@ -64,6 +64,7 @@ class PlotCanvas(FigureCanvas):
         logger.info("Инициализация PlotCanvas успешно завершена")
 
     def clear_plot(self):
+        """Метод очистки графика"""
         self.ax.cla()
         self.ax.grid(True)
         self.draw()
@@ -426,6 +427,7 @@ class PlotArea(QWidget):
         QTimer.singleShot(0, self.toolbar.save_current_view)
 
     def change_x_settings(self):
+        """Обработчик события изменения границ оси Х"""
         ax = self.canvas.ax
         time = self.data.columns[0]
         try:
@@ -452,6 +454,7 @@ class PlotArea(QWidget):
             return
 
     def change_y_settings(self):
+        """Обработчик события изменения границ оси У"""
         ax = self.canvas.ax
         try:
             text = self.y_settings.text().strip().lower()
@@ -474,6 +477,7 @@ class PlotArea(QWidget):
             return
 
     def clear_graph(self):
+        """Обработчик события нажатия на кнопку Очистить график"""
         self.canvas.clear_plot()
         self.lines = {}
         for combo in self.main_window.pages[self.main_window.current_page][
@@ -489,8 +493,8 @@ class PlotArea(QWidget):
         self.canvas.draw()
 
     def save(self):
+        """Обработчик события нажатия на кнопку Сохранить график"""
         options = QFileDialog.Options()
-        # options |= QFileDialog.DontUseNativeDialog
         options |= QFileDialog.ShowDirsOnly
         path = (
             self.main_window.path_ent.text()

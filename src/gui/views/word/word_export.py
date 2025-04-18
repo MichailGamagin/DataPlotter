@@ -87,17 +87,19 @@ class Word:
         list_item = self.doc.add_paragraph()
         list_item.alignment = WD_ALIGN_PARAGRAPH.CENTER
         list_item.style = self.list_style
+        prms = parameters.copy()
         if alt_caption:
             list_item.add_run(alt_caption)
         else:
-            for i, label in enumerate(labels, 1):
+            lbls = labels.copy()
+            for i, label in enumerate(lbls, 1):
                 list_item.add_run(f"{i} - {label}")
-                if i < len(labels):
+                if i < len(lbls):
                     list_item.add_run("\n")
 
         caption = self.doc.add_paragraph()
         caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        caption_text = f'{parameters["pict"]} {parameters["num-section"]}.{int(parameters["first-pic"])+idx} - {parameters["mode-name"]}'
+        caption_text = f'{prms["pict"]} {prms["num-section"]}.{int(prms["first-pic"])+idx} - {prms["mode-name"]}'
         caption.add_run(caption_text).bold = False
         caption.style = self.get_style_list()
 

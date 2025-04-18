@@ -82,6 +82,7 @@ class LeftPanel(QWidget):
             logger.error(f"Ошибка при настройке пользовательского интерфейса LeftPanel: {str(e)}", exc_info=True)
 
     def update_label(self):
+        """Метод обновления номера графика"""
         font = QFont()
         font.setPointSize(14)
         font.setBold(True)

@@ -61,10 +61,12 @@ class AlternativeLines(QtWidgets.QWidget):
         logger.info(f"Инициализация AlternativeLines успешно завершена")
 
     def create_pages(self):
+        """Создание страниц"""
         for graph_num in range(0, len(self.pages)):
             self.add_page(graph_num)
 
-    def add_page(self, graph_num):
+    def add_page(self, graph_num: int):
+        """Метод добавления страницы"""
         page_indx = graph_num
         page = QtWidgets.QWidget()
 
@@ -148,6 +150,7 @@ class AlternativeLines(QtWidgets.QWidget):
         self.stack.addWidget(page)
 
     def on_graph_clicked(self, item, column=0):
+        """Обработчик события клика на элемент в QTreeWidget"""
         graph_name = item.text(0)
         if graph_name != "Графики":
             try:
@@ -157,6 +160,7 @@ class AlternativeLines(QtWidgets.QWidget):
                 logger.debug(f"Ошибка обработки имени графика: {graph_name}")
 
     def accept(self):
+        """Обработчик события клика на кнопке Применить"""
         self.get_text_from_textEdit()
 
     def get_text_from_textEdit(self):
@@ -167,7 +171,7 @@ class AlternativeLines(QtWidgets.QWidget):
         self.cuptions[header] = text
 
     def set_text_to_textEdit(self):
-        # Загружаем данные из main_window.alternative_captions
+        """Метод установка текста в textEdit """
         for i, header in enumerate(self.headers):
             if header in self.main_window.alternative_captions:
                 text = self.main_window.alternative_captions[header]
@@ -175,7 +179,7 @@ class AlternativeLines(QtWidgets.QWidget):
                 self.cuptions[header] = text
 
     def save(self):
-        # Сохраняем данные в main_window.alternative_captions
+        """Сохранение в главное окно """
         for header, text in self.cuptions.items():
             self.main_window.alternative_captions[header] = text
 
