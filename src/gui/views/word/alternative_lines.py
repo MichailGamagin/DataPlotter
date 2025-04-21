@@ -1,6 +1,7 @@
 import sys
 import os
 
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from src.gui.styles import WORK_SPACE_STYLE, ALTERNATIVE_LINES_STACK_STYLE
@@ -16,6 +17,7 @@ class AlternativeLines(QtWidgets.QWidget):
         self.parent = parent
         self.main_window = main_window
         self.setWindowTitle("Настройка альтернативных подписей линий")
+        self.setFixedSize(1180, 800)  
         self.setWindowIcon(QtGui.QIcon(os.path.join(ICONS_DIR, "icons", "settings.jpg")))
         self.pages = self.main_window.pages
         self.textEdits = {}
@@ -137,12 +139,7 @@ class AlternativeLines(QtWidgets.QWidget):
         # Кнопки
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.addStretch(1)
-        accept_btn = QtWidgets.QPushButton("Применить")
-        accept_btn.setToolTip('Применить изменения')
-        accept_btn.clicked.connect(self.accept)
-        button_layout.addWidget(accept_btn)
         save_btn = QtWidgets.QPushButton("Сохранить")
-        save_btn.setToolTip('Сохранить изменения в файл')
         save_btn.clicked.connect(self.save)
         button_layout.addWidget(save_btn)
         page_layout.addLayout(button_layout)
@@ -159,15 +156,18 @@ class AlternativeLines(QtWidgets.QWidget):
             except (IndexError, ValueError):
                 logger.debug(f"Ошибка обработки имени графика: {graph_name}")
 
-    def accept(self):
-        """Обработчик события клика на кнопке Применить"""
-        self.get_text_from_textEdit()
-
-    def get_text_from_textEdit(self):
-        current_page = self.stack.currentIndex()
-        textEdit = self.textEdits[f"{current_page}"]
+    def accept_changes(self, num_graph: int = None):
+        """
+        Сохраняет изменения для текущей страницы.
+        """
+       
+        if num_graph is None:
+            num_graph = self.stack.currentIndex()
+        textEdit = self.textEdits[f"{num_graph}"]
         text = textEdit.toPlainText().strip()
-        header = self.headers[current_page]
+        header = self.headers[num_graph]
+
+        
         self.cuptions[header] = text
 
     def set_text_to_textEdit(self):
@@ -179,9 +179,17 @@ class AlternativeLines(QtWidgets.QWidget):
                 self.cuptions[header] = text
 
     def save(self):
-        """Сохранение в главное окно """
-        for header, text in self.cuptions.items():
-            self.main_window.alternative_captions[header] = text
+        """
+        Сохранение всех изменений в главное окно.
+        Переносит все альтернативные подписи из self.cuptions в self.main_window.alternative_captions.
+        """
+        for idx, _ in enumerate(self.headers):
+            self.accept_changes(idx)
+        self.main_window.alternative_captions.update(self.cuptions)
+        QMessageBox.information(
+            self, "Успешно", "Все изменения сохранены."
+        )
+
 
 
 if __name__ == "__main__":

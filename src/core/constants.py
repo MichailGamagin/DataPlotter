@@ -1,10 +1,6 @@
 import os
 from pathlib import Path
 
-# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# BASE_DIR_ICONS = os.path.dirname(os.path.abspath(__file__))
-# DEFAULT_DIR = os.path.dirname(os.path.abspath('D:\\'))
-# SAVE_FILE = r"./save.yaml"
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ICONS_DIR = BASE_DIR / 'resources'  
 DEFAULT_DIR = Path.home()

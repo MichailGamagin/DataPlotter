@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
     QMenu,
     QStatusBar,
     QAction,
+    QDesktopWidget,
 )
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt
@@ -60,15 +61,8 @@ class MainWindow(QMainWindow):
         data_file_path (str): Путь к файлу с данными.
         data (pd.DataFrame): DataFrame с данными для построения графиков.
         stack (QStackedWidget): Виджет для отображения страниц.
-        new_btn (QPushButton): Кнопка для добавления новой страницы.
-        prev_btn (QPushButton): Кнопка для перехода на предыдущую страницу.
-        next_btn (QPushButton): Кнопка для перехода на следующую страницу.
-        save_all_btn (QPushButton): Кнопка для сохранения всех графиков.
-        save_state_btn (QPushButton): Кнопка для сохранения состояния приложения.
-        load_state_btn (QPushButton): Кнопка для загрузки состояния приложения.
-        word_btn (QPushButton): Кнопка для экспорта графиков в Word.
-        path_lbl (QLabel): Метка для отображения текста "Путь к файлу:".
-        path_ent (MyLineEdit): Поле ввода для указания пути к файлу с данными.
+        alternative_captions(dict): словарь для альтернативных названий линий
+        params(dict): словарь для хранения настроек Word для документа(шрифт, интервал и тд)
     """
 
     def __init__(self):
@@ -77,15 +71,59 @@ class MainWindow(QMainWindow):
         self.pages = []
         self.params = {}
         self.alternative_captions = {}
-        self.menubar = self.menuBar()
-        file_menu = self.menubar.addMenu("Настройки")
+
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
         self.setStyleSheet(STACK_WIDGET_STYLE)
-        # Toolbar
+        self.current_page = 0
+        self.data_file_path = DEFAULT_FILE_PATH
+        self.data = load_data_from(self.data_file_path, ENCODING)
+        self.init_ui()
+        self._load_state()
+        self.path_ent.returnPressed.connect(self.load_data)
+        logger.info("Интерфейс MainWindow успешно инициализирован")
+
+    def init_ui(self):
+        logger.info(f"Инициализация пользовательского интерфейса MainWindow")
+        self.init_menu()
+        self.init_toolbar()
+
+        self.shortcut_right = QShortcut(QKeySequence("Right"), self)
+        self.shortcut_right.activated.connect(self.next_page)
+        self.shortcut_left = QShortcut(QKeySequence("Left"), self)
+        self.shortcut_left.activated.connect(self.prev_page)
+
+        if self.data_file_path == "":
+            self.add_page()
+        self.update_buttons()
+
+        # Window settings
+        self.setWindowTitle("Data Plotter")
+        self.setWindowIcon(QIcon(os.path.join(ICONS_DIR, "icons", "main_icon.png")))
+
+        self.word_settings = WordSettings(parent=self).accept()
+        logger.info("Пользовательский интерфейс MainWindow успешно инициализирован")
+
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
+        self.show()
+        self.path_ent.clearFocus()
+        self.setFocus()
+
+    def init_menu(self):
+        """Инициализация меню"""
+        self.menubar = self.menuBar()
+        file_menu = self.menubar.addMenu("Файл")
+        file_menu.addAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "new_project.jpg")),
+            "Новый проект",
+            self.new_project,
+        )
+
+    def init_toolbar(self):
+        """Инициализация ToolBar'a"""
         toolbar = QToolBar()
         self.addToolBar(toolbar)
-
         # Navigation buttons
         self.insert_page_left_act = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "insert_left.png")),
@@ -174,12 +212,6 @@ class MainWindow(QMainWindow):
         )
         self.word_settings_act.setToolTip("Настройки Word")
         self.word_settings_act.triggered.connect(self.open_settings)
-
-        self.shortcut_right = QShortcut(QKeySequence("Right"), self)
-        self.shortcut_right.activated.connect(self.next_page)
-        self.shortcut_left = QShortcut(QKeySequence("Left"), self)
-        self.shortcut_left.activated.connect(self.prev_page)
-
         self.path_lbl = QLabel("Путь к файлу:")
         self.path_lbl.setStyleSheet(
             "color: black;\n" "font-size: 14px;\n" "font-weight: 700;"
@@ -189,18 +221,6 @@ class MainWindow(QMainWindow):
         self.path_ent.setMaximumWidth(600)
         self.path_ent.setAcceptDrops(True)
         self.path_ent.setStyleSheet(MY_LINE_EDIT_STYLE)
-
-        # self.setFixedSize(1350, 800)
-        self.current_page = 0
-        self.data_file_path = DEFAULT_FILE_PATH
-        self.data = load_data_from(self.data_file_path, ENCODING)
-        self.init_ui(toolbar)
-        self._load_state()
-        self.path_ent.returnPressed.connect(self.load_data)
-        logger.info("Интерфейс MainWindow успешно инициализирован")
-
-    def init_ui(self, toolbar):
-        logger.info(f"Инициализация пользовательского интерфейса MainWindow")
         toolbar.addAction(self.insert_page_left_act)
         toolbar.addAction(self.add_page_act)
         toolbar.addAction(self.insert_page_right_act)
@@ -221,22 +241,20 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(self.path_lbl)
         toolbar.addWidget(self.path_ent)
 
-        if self.data_file_path == "":
-            self.add_page()
-        self.update_buttons()
+    def center(self):
+        """Центрирование главного окна окна"""
+        screen = QDesktopWidget().screenGeometry()
+        size = self.geometry()
+        window_width = size.width()
+        window_height = size.height()
+        x = (screen.width() - window_width) // 2
+        y = (screen.height() - window_height) // 2
+        self.move(x, y)
 
-        # Window settings
-        self.setWindowTitle("Data Plotter")
-        # self.setGeometry(300, 300, 1300, 700)
-        self.setWindowIcon(QIcon(os.path.join(ICONS_DIR, "icons", "main_icon.png")))
-        self.word_settings = WordSettings(parent=self).accept()
-        logger.info("Пользовательский интерфейс MainWindow успешно инициализирован")
-
-        self.statusBar = QStatusBar()
-        self.setStatusBar(self.statusBar)
-        self.show()
-        self.path_ent.clearFocus()
-        self.setFocus()
+    def showEvent(self, event):
+        """Обработчик события отображения окна на экране"""
+        super().showEvent(event)
+        self.center()
 
     def change_status(self, message):
         """Изменяет текст в статусбаре"""
@@ -427,7 +445,9 @@ class MainWindow(QMainWindow):
             self.update_buttons()
             logger.info(f"Удалена страница №{self.current_page + 1}")
         else:
-            msg = MessageWindow("Невозможно удалить", "Невозможно удалить последнюю страницу")
+            msg = MessageWindow(
+                "Невозможно удалить", "Невозможно удалить последнюю страницу"
+            )
             msg.exec_()
 
     def insert_page_right(self):
@@ -482,6 +502,7 @@ class MainWindow(QMainWindow):
         self.insert_page_left_act.setEnabled(self.current_page > 0)
         self.insert_page_right_act.setEnabled(self.current_page < len(self.pages))
         self.remove_page_act.setEnabled(len(self.pages) > 1)
+
     def update_graph(self):
         combos = self.pages[self.current_page]["left"].combos
         for i in range(len(combos)):
@@ -512,7 +533,7 @@ class MainWindow(QMainWindow):
 
     def save_state(self):
         options = QFileDialog.Options()
-        path = self.path_ent.text()
+        path = SAVE_FILE.read_text()
         if path:
             home_dir = Path(path).parent.as_posix()
         else:
@@ -751,6 +772,28 @@ class MainWindow(QMainWindow):
         """Перезаписывает путь к последнему файлу состояния"""
         with open(SAVE_FILE, "w", encoding="cp1251") as f:
             f.write(path)
+
+    def new_project(self):
+        """Создание нового проекта"""
+        reply = QMessageBox.question(
+            self,
+            "Вы уверены?",
+            f"Вы уверены, что хотите создать новый проект?\nВсе несохраненные данные будут утеряны!",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply == QMessageBox.Yes:
+            self.clear_all()
+            self.pages = []
+            self.add_page()
+            self.path_ent.clear()
+        else:
+            return
+
+    def clear_all(self):
+        """Очистка главного окна от всех виджетов"""
+        for page in self.pages:
+            self.stack.removeWidget(page["widget"])
 
 
 if __name__ == "__main__":

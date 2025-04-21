@@ -255,6 +255,8 @@ class PlotArea(QWidget):
         self.plot_layout.addWidget(self.toolbar_and_buttons_panel)
         self.main_layout.addWidget(self.bottom_panel)
 
+        self.init_width, self.init_hight = self.canvas.fig.get_size_inches()
+
         logger.info(
             "Инициализация пользовательского интерфейса PlotArea успешно завершена"
         )
@@ -522,10 +524,15 @@ class PlotArea(QWidget):
         if not Path(directory).exists():
             Path(directory).mkdir(exist_ok=True)
         number = self.main_window.current_page + 1
-        x = self.canvas.ax.get_xlim()[1]
+        x_axis_limit = self.canvas.ax.get_xlim()[1]
+        
+        current_width, current_hight = self.canvas.fig.get_size_inches()
+        self.canvas.fig.set_size_inches(self.init_width, self.init_hight)
 
-        filename = f"/grf_{number} из {len(self.main_window.pages)}_{int(x)}s.png"
+
+        filename = f"/grf_{number} из {len(self.main_window.pages)}_{int(x_axis_limit)}s.png"
         self.canvas.figure.savefig(directory + filename, format="png", dpi=600)
+        self.canvas.figure.set_size_inches(current_width, current_hight)
         QMessageBox.information(
             self,
             "Успех",
