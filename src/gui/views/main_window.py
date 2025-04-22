@@ -80,7 +80,6 @@ class MainWindow(QMainWindow):
         self.data = load_data_from(self.data_file_path, ENCODING)
         self.init_ui()
         self._load_state()
-        self.path_ent.returnPressed.connect(self.load_data)
         logger.info("Интерфейс MainWindow успешно инициализирован")
 
     def init_ui(self):
@@ -221,6 +220,7 @@ class MainWindow(QMainWindow):
         self.path_ent.setMaximumWidth(600)
         self.path_ent.setAcceptDrops(True)
         self.path_ent.setStyleSheet(MY_LINE_EDIT_STYLE)
+        self.path_ent.returnPressed.connect(self.load_data)
         toolbar.addAction(self.insert_page_left_act)
         toolbar.addAction(self.add_page_act)
         toolbar.addAction(self.insert_page_right_act)
@@ -358,7 +358,17 @@ class MainWindow(QMainWindow):
                 QApplication.processEvents()
                 # Сохраняем временное изображение
                 img_path = temp_dir / f"graph_{idx}.png"
+                current_width, current_hight = page[
+                    "right"
+                ].canvas.fig.get_size_inches()
+                page["right"].canvas.fig.set_size_inches(
+                    page["right"].init_width, page["right"].init_hight
+                )
+
                 page["right"].canvas.figure.savefig(img_path, dpi=300)
+                page["right"].canvas.figure.set_size_inches(
+                    current_width, current_hight
+                )
                 # Добавляем в документ
                 # 1. Изображение
                 word_doc.add_image(
@@ -565,9 +575,13 @@ class MainWindow(QMainWindow):
                 alternative_caption = self.alternative_captions.get(graph_header, "")
                 page_state = {
                     "Number_graph": graph_header,
-                    "Symbol": [
+                    "Symbol_Y": [
                         str(page_data["right"].group.currentText()),
                         str(page_data["right"].sizing_cmb.currentText()),
+                    ],
+                    "Symbol_X": [
+                        str(page_data["right"].group_x.currentText()),
+                        str(page_data["right"].sizing_cmb_x.currentText()),
                     ],
                     "Axis_settings": {
                         "X": str(page_data["right"].x_settings.currentText()),
@@ -644,8 +658,14 @@ class MainWindow(QMainWindow):
                 current_page["right"].x_spacing_grid_spinBox.setValue(
                     int(page_state["Axis_settings"]["X_grid_lines"])
                 )
-                current_page["right"].group.setCurrentText(page_state["Symbol"][0])
-                current_page["right"].sizing_cmb.setCurrentText(page_state["Symbol"][1])
+                current_page["right"].group.setCurrentText(page_state["Symbol_Y"][0])
+                current_page["right"].sizing_cmb.setCurrentText(
+                    page_state["Symbol_Y"][1]
+                )
+                current_page["right"].group_x.setCurrentText(page_state["Symbol_X"][0])
+                current_page["right"].sizing_cmb_x.setCurrentText(
+                    page_state["Symbol_X"][1]
+                )
 
                 # Загрузка параметров левой части
                 for j, combo_text in enumerate(page_state["Lists"]):
@@ -682,7 +702,6 @@ class MainWindow(QMainWindow):
     def load_state(self):
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
-        # options |= QFileDialog.DontUseNativeDialog
 
         path = Path(self.path_ent.text()).resolve()
         if path:
@@ -787,6 +806,8 @@ class MainWindow(QMainWindow):
             self.pages = []
             self.add_page()
             self.path_ent.clear()
+            [i.clear() for i in self.pages[0]["left"].combos]
+            self.pages[0]["left"].combos[0].clear()
         else:
             return
 

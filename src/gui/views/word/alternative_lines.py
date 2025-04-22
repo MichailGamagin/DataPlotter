@@ -23,7 +23,10 @@ class AlternativeLines(QtWidgets.QWidget):
         self.textEdits = {}
         self.headers = []
         self.cuptions = {}
+        self.init_ui()
+        logger.info(f"Инициализация AlternativeLines успешно завершена")
 
+    def init_ui(self):
         # Основной макет
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
@@ -36,6 +39,10 @@ class AlternativeLines(QtWidgets.QWidget):
         self.work_space.setStyleSheet(WORK_SPACE_STYLE)
         self.work_space.setHeaderHidden(False)
         self.work_space.headerItem().setText(0, "Рабочая область")
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setBold(True)
+        self.work_space.headerItem().setFont(0, font) 
         self.work_space.headerItem().setTextAlignment(0, QtCore.Qt.AlignCenter)
         self.work_space.itemClicked.connect(self.on_graph_clicked)
 
@@ -56,11 +63,9 @@ class AlternativeLines(QtWidgets.QWidget):
         self.stack.setStyleSheet(ALTERNATIVE_LINES_STACK_STYLE)
 
         # Динамически создаем страницы
-        self.cuptions = {}
         self.create_pages()
         self.set_text_to_textEdit()
         main_layout.addWidget(self.stack)
-        logger.info(f"Инициализация AlternativeLines успешно завершена")
 
     def create_pages(self):
         """Создание страниц"""
@@ -160,14 +165,11 @@ class AlternativeLines(QtWidgets.QWidget):
         """
         Сохраняет изменения для текущей страницы.
         """
-       
         if num_graph is None:
             num_graph = self.stack.currentIndex()
         textEdit = self.textEdits[f"{num_graph}"]
         text = textEdit.toPlainText().strip()
         header = self.headers[num_graph]
-
-        
         self.cuptions[header] = text
 
     def set_text_to_textEdit(self):
@@ -189,7 +191,6 @@ class AlternativeLines(QtWidgets.QWidget):
         QMessageBox.information(
             self, "Успешно", "Все изменения сохранены."
         )
-
 
 
 if __name__ == "__main__":

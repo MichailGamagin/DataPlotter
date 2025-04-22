@@ -24,7 +24,7 @@ COLORS = [
     "darkblue",
     "darkred",
 ]
-MARKERS = ["o", "s", "D", "^", "v", "*", "+", "x", ".", '>', '<', 'd', 'p', 'h', ',']
+MARKERS = ["o", "s", "D", "^", "v", "*", "+", "x", ".", '>', '<', 'd', 'p', 'h', 'X']
 SIZING = [
     "отн. ед",
     "rel. units",

@@ -116,30 +116,28 @@ class PlotArea(QWidget):
 
         # Создаем виджеты
         # Обозначение оси Y
-        group_lbl = QLabel("Обозначение:")
-        group_lbl.setToolTip(
+        group_lbl_y = QLabel("Обозначение Y:")
+        group_lbl_y.setToolTip(
             "Буквенное обозначение\nфизической величины.\nНапример: Q, P, T и т.д."
         )
-        group_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        group_lbl.setStyleSheet(LABEL_STYLE)
+        group_lbl_y.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        group_lbl_y.setStyleSheet(LABEL_STYLE)
         self.group = QComboBox()
         self.group.addItems(MAIN_CHARS)
         self.group.setStyleSheet(COMBO_STYLE)
         self.group.setEditable(True)
         self.group.setCurrentIndex(-1)
-        # self.group.setFixedWidth(80)
         self.group.currentTextChanged.connect(self.main_window.update_graph)
 
         # Размерность
-        sizing_lbl = QLabel("Размерность:")
-        sizing_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        sizing_lbl.setStyleSheet(LABEL_STYLE)
+        sizing_lbl_y = QLabel("Размерность Y:")
+        sizing_lbl_y.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        sizing_lbl_y.setStyleSheet(LABEL_STYLE)
         self.sizing_cmb = QComboBox()
         self.sizing_cmb.setStyleSheet(COMBO_STYLE)
         self.sizing_cmb.addItems(SIZING)
         self.sizing_cmb.setEditable(True)
         self.sizing_cmb.setCurrentIndex(-1)
-        # self.sizing_cmb.setFixedWidth(80)
         self.sizing_cmb.currentTextChanged.connect(self.main_window.update_graph)
 
         # Настройка оси X
@@ -154,8 +152,28 @@ class PlotArea(QWidget):
         self.x_settings.addItems(["auto", "300", "600", "1800", "3600"])
         self.x_settings.setEditable(True)
         self.x_settings.setCurrentIndex(0)
-        # self.x_settings.setFixedWidth(80)
         self.x_settings.currentTextChanged.connect(self.main_window.update_graph)
+        group_lbl_x = QLabel("Обозначение X:")
+        group_lbl_x.setToolTip(
+            "Буквенное обозначение времени.\nНапример: t"
+        )
+        group_lbl_x.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        group_lbl_x.setStyleSheet(LABEL_STYLE)
+        sizing_lbl_x = QLabel("Размерность X:")
+        sizing_lbl_x.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        sizing_lbl_x.setStyleSheet(LABEL_STYLE)
+        self.sizing_cmb_x = QComboBox()
+        self.sizing_cmb_x.setStyleSheet(COMBO_STYLE)
+        self.sizing_cmb_x.addItems(["t", "tau"])
+        self.sizing_cmb_x.setEditable(True)
+        self.sizing_cmb_x.currentTextChanged.connect(self.main_window.update_graph)
+        self.sizing_cmb_x.setCurrentIndex(0)
+        self.group_x = QComboBox()
+        self.group_x.addItems(["с", "s", "ч", "h"])
+        self.group_x.setStyleSheet(COMBO_STYLE)
+        self.group_x.setEditable(True)
+        self.group_x.currentTextChanged.connect(self.main_window.update_graph)
+        self.group_x.setCurrentIndex(0)
 
         # Настройка оси Y
         y_ax_settings_lbl = QLabel("Настройка оси Y:")
@@ -166,23 +184,23 @@ class PlotArea(QWidget):
         self.y_settings = QLineEdit()
         self.y_settings.setText("auto")
         self.y_settings.setStyleSheet(LINE_EDIT_STYLE)
-        # self.y_settings.setFixedWidth(80)
         self.y_settings.editingFinished.connect(self.change_y_settings)
 
         # Распределение элементов по сетке
-        # Нулевая и первая колонка (Обозначение и размерность)
-        self.top_controls_layout.addWidget(group_lbl, 0, 0, 1, 1)
-        self.top_controls_layout.addWidget(self.group, 0, 1, 1, 1)
-        self.top_controls_layout.addWidget(sizing_lbl, 1, 0, 1, 1)
-        self.top_controls_layout.addWidget(self.sizing_cmb, 1, 1, 1, 1)
+        self.top_controls_layout.addWidget(y_ax_settings_lbl, 0, 0, 1, 1)
+        self.top_controls_layout.addWidget(self.y_settings, 0, 1, 1, 1)
+        self.top_controls_layout.addWidget(group_lbl_y, 1, 0, 1, 1)
+        self.top_controls_layout.addWidget(self.group, 1, 1, 1, 1)
+        self.top_controls_layout.addWidget(sizing_lbl_y, 2, 0, 1, 1)
+        self.top_controls_layout.addWidget(self.sizing_cmb, 2, 1, 1, 1)
 
-        # Вторая и третья колонка (Настройки осей)
         self.top_controls_layout.addWidget(x_ax_settings_lbl, 0, 2, 1, 1)
         self.top_controls_layout.addWidget(self.x_settings, 0, 3, 1, 1)
-        self.top_controls_layout.addWidget(y_ax_settings_lbl, 1, 2, 1, 1)
-        self.top_controls_layout.addWidget(self.y_settings, 1, 3, 1, 1)
+        self.top_controls_layout.addWidget(group_lbl_x, 1, 2, 1, 1)
+        self.top_controls_layout.addWidget(sizing_lbl_x, 2, 2, 1, 1)
+        self.top_controls_layout.addWidget(self.sizing_cmb_x, 1, 3, 1, 1)
+        self.top_controls_layout.addWidget(self.group_x, 2, 3, 1, 1)
 
-        # 4 и 5 колонка (Настройки маркеров)
         marker_lbl = QLabel("Частота маркера:")
         marker_lbl.setToolTip("Устанавливает частоту маркеров\nна всех линиях графика")
         marker_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -321,6 +339,29 @@ class PlotArea(QWidget):
             params.append(combo.currentText())
         return params
 
+    def vis_x_label_text(self):
+        # ax.set_xlabel(r"$\frac{t}{\text{с}}$", loc="right")
+        unit = self.sizing_cmb_x.currentText()
+        if unit == "":
+            unit_tex = ""
+        else:
+            unit_tex = r"\text{" + unit + "}"
+        char = self.group_x.currentText()
+        if char == "":
+            char_tex = ""
+        else:
+            char_tex = r"\text{" + char + "}"
+
+        if char_tex != "" and unit_tex != "":
+            x_label_text = rf"$\frac{{{unit_tex}}}{{{char_tex}}}$"
+        elif char_tex != "" and unit_tex == "":
+            x_label_text = rf"${char_tex}$"
+        elif char_tex == "" and unit_tex != "":
+            x_label_text = rf"${unit_tex}$"
+        else:
+            x_label_text = ""
+        return x_label_text
+
     def vis_y_label_text(self):
         """
         Формирует текст в формате Latex для подписи оси Y .
@@ -382,7 +423,8 @@ class PlotArea(QWidget):
         ax.tick_params(axis="both", which="major", labelsize=10)
         ax.xaxis.label.set_fontsize(14)
         ax.yaxis.label.set_fontsize(14)
-        ax.set_xlabel(r"$\frac{t}{\text{с}}$", loc="right")
+        x_label_text = self.vis_x_label_text()
+        ax.set_xlabel(x_label_text, loc="right")
         y_label_text = self.vis_y_label_text()
         ax.set_ylabel(
             y_label_text,
@@ -525,10 +567,9 @@ class PlotArea(QWidget):
             Path(directory).mkdir(exist_ok=True)
         number = self.main_window.current_page + 1
         x_axis_limit = self.canvas.ax.get_xlim()[1]
-        
+
         current_width, current_hight = self.canvas.fig.get_size_inches()
         self.canvas.fig.set_size_inches(self.init_width, self.init_hight)
-
 
         filename = f"/grf_{number} из {len(self.main_window.pages)}_{int(x_axis_limit)}s.png"
         self.canvas.figure.savefig(directory + filename, format="png", dpi=600)
