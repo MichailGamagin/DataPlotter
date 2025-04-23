@@ -763,11 +763,20 @@ class MainWindow(QMainWindow):
                     page["left"].num_page.text().replace(" ", "_").replace("/", "-")
                 )
                 filename = os.path.join(directory, f"{number}.png")
+                current_width, current_hight = page[
+                    "right"
+                ].canvas.fig.get_size_inches()
+                page["right"].canvas.fig.set_size_inches(
+                    page["right"].init_width, page["right"].init_hight
+                )
 
                 page["right"].canvas.figure.savefig(
                     filename,
                     format="png",
                     dpi=300,
+                )
+                page["right"].canvas.figure.set_size_inches(
+                    current_width, current_hight
                 )
             QMessageBox.information(
                 self, "Успешно", f"Графики сохранены в:\n{directory}"
