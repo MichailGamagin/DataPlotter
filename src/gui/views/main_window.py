@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+"""
+Файл основного окна приложения
+"""
 import sys
 import os
 import yaml
@@ -11,7 +15,6 @@ from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QPushButton,
     QFileDialog,
     QStackedWidget,
     QToolBar,
@@ -19,8 +22,6 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QSizePolicy,
     QShortcut,
-    QMenuBar,
-    QMenu,
     QStatusBar,
     QAction,
     QDesktopWidget,
@@ -280,6 +281,7 @@ class MainWindow(QMainWindow):
                 for combo in page["left"].combos:
                     combo.clear()
                     combo.blockSignals(True)
+                    combo._original_items = []
                     combo.addItems(self.data.columns[1:])
                     combo.setCurrentIndex(-1)
                     combo.blockSignals(False)

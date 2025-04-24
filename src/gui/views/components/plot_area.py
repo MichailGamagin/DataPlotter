@@ -441,6 +441,7 @@ class PlotArea(QWidget):
         # ax.xaxis.set_major_locator(plt.MaxNLocator(5))  # 5 меток максимум
 
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda val, loc: f"{val:.0f}"))
+        ax.yaxis.set_major_formatter(plt.ScalarFormatter(useMathText = True, useOffset=False))
 
         # Remove existing line if present
         if line_idx in self.lines:

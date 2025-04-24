@@ -1,3 +1,7 @@
+"""
+В этом файле содержатся функции распаковки выходных данных из теплогидравлических кодов и некоторые вспомогательные функции.
+Описание функций приведено в функциях.
+"""
 from struct import unpack
 import pandas as pd
 import numpy as np
@@ -6,6 +10,8 @@ from src.core.constants import BASE_DIR, DEFAULT_FILE_PATH
 from src.utils.logger import Logger
 
 logger = Logger.get_logger(__name__)
+
+
 
 def data_KORSAR(path: str, enc: str) -> pd.DataFrame:
     """
@@ -18,12 +24,13 @@ def data_KORSAR(path: str, enc: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame с данными.
     """
-    try: 
+    try:
         with open(path, "r", encoding=enc) as dat:
             length = int(dat.readline().strip())
             headers = [next(dat).strip().replace("\n", "") for _ in range(length)]
         data = np.loadtxt(path, encoding=enc, dtype=float, skiprows=length + 1)
-        return pd.DataFrame(data, columns=headers)
+        df = pd.DataFrame(data, columns=headers)
+        return numeric_columns(df)
     except Exception as e:
         return None
 
@@ -31,27 +38,33 @@ def data_KORSAR(path: str, enc: str) -> pd.DataFrame:
 def data_TRAP_csv(path: str) -> pd.DataFrame | None:
     """
     Считывает данные из выходного файла Korr_v49 в формате csv.
-    
+
     Args:
         path (str): Путь к файлу.
 
     Returns:
         pd.DataFrame: DataFrame с данными.
     """
+    # Количество параметров по умолчанию в ТРАПе(первые 24 в lent3)
+    count_default_TRAP_params = 24
     try:
         csv = pd.read_csv(
             path, encoding="windows-1251", header=2, sep=";", dtype="float64"
         )
         col = [header.strip() for header in csv.columns.to_list()]
-        return pd.read_csv(
+        col_new = [
+            replace_eng_with_rus(name) if idx < count_default_TRAP_params else name
+            for idx, name in enumerate(col)
+        ]
+        df = pd.read_csv(
             path,
             encoding="windows-1251",
             header=2,
             sep=";",
             dtype="float64",
-            names=col,
-            
+            names=col_new,
         )
+        return numeric_columns(df)
     except Exception as e:
         return None
 
@@ -66,6 +79,8 @@ def read_TRAP_lent(path) -> pd.DataFrame | None:
     Returns:
         - df (pd.DataFrame): DataFrame с данными, где первый столбец - время, остальные - параметры.
     """
+    # Количество параметров по умолчанию в ТРАПе(первые 24 в lent3)
+    count_default_TRAP_params = 24
     try:
         with open(path, "rb") as f:
             # Пропускаем первые 4 байта
@@ -79,7 +94,10 @@ def read_TRAP_lent(path) -> pd.DataFrame | None:
 
             # Считываем названия параметров
             names = [f.read(60).decode("cp866").strip() for _ in range(N)]
-
+            names_new = [
+                replace_eng_with_rus(name) if idx < count_default_TRAP_params else name
+                for idx, name in enumerate(names)
+            ]
             # Считываем данные и время
             data_list = []
             time_list = []
@@ -105,10 +123,10 @@ def read_TRAP_lent(path) -> pd.DataFrame | None:
             data_array = np.array(data_list)
 
             # Создаем DataFrame
-            df = pd.DataFrame(data_array, columns=names[1:])
+            df = pd.DataFrame(data_array, columns=names_new[1:])
             df.insert(0, "Время, с", time_array)
-            return df
-    
+            return numeric_columns(df)
+
     except Exception as e:
         return None
 
@@ -143,15 +161,16 @@ def load_data_from(path: str, enc: str):
             logger.info(f"Данные успешно загружены из файла: {path}")
             return data
 
-        # Try LENT 
+        # Try LENT
         data = read_TRAP_lent(path)
         if data is not None:
             logger.info(f"Данные успешно загружены из файла: {path}")
             return data
-        
-        
-        logger.info(f"Не удалось загрузить данные из файла: {path}\n"
-              "Возвращен дефолтный DataFrame.")
+
+        logger.info(
+            f"Не удалось загрузить данные из файла: {path}\n"
+            "Возвращен дефолтный DataFrame."
+        )
         return pd.DataFrame(
             data={"Время, с": np.arange(100), "Параметр, кг": np.arange(100)}
         )
@@ -168,11 +187,44 @@ def load_data_from(path: str, enc: str):
         )
 
 
+def numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Добавление нумерации в названия столбцов DataFrame"""
+    new_df = df.copy(deep=True)
+    new_columns = {col: f"{i}. {col}" for i, col in enumerate(df.columns)}
+    new_df.rename(columns=new_columns, inplace=True)
+    return new_df
+
+
+def replace_eng_with_rus(text: str) -> str:
+    "Функция приведения символов в строке из смеси английских и русских букв к строке с только русскими буквами"
+    eng_to_rus = {
+        "A": "А",
+        "B": "В",
+        "C": "С",
+        "E": "Е",
+        "H": "Н",
+        "K": "К",
+        "M": "М",
+        "O": "О",
+        "P": "Р",
+        "T": "Т",
+        "X": "Х",
+        "Y": "У",
+    }
+    result = ""
+    for char in text:
+        if char.upper() in eng_to_rus:
+            result += eng_to_rus[char.upper()]
+        else:
+            result += char
+    return result
+
+
 if __name__ == "__main__":
-    
-    path_TRAP = BASE_DIR / 'data' + "\\test.csv"
-    path_KORSAR = BASE_DIR / 'data' + "\\res_cyclic.txt"
-    path_lent = BASE_DIR / 'data' + "\\lent3"
+
+    path_TRAP = BASE_DIR / "data" + "\\test.csv"
+    path_KORSAR = BASE_DIR / "data" + "\\res_cyclic.txt"
+    path_lent = BASE_DIR / "data" + "\\lent3"
     data = load_data_from(path_lent, enc="cp1251")
     # data = read_lent(path_lent)
     print(data)

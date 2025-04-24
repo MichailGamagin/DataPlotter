@@ -1,3 +1,7 @@
+"""
+В этом файле содержатся все стили QSS применяемые в программе для различных виджетов
+"""
+
 from src.utils import resources
 
 SPIN_BOX_STYLE = str(

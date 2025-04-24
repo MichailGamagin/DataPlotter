@@ -11,6 +11,9 @@ from src.utils.logger import Logger
 logger = Logger.get_logger(__name__)
 
 class AlternativeLines(QtWidgets.QWidget):
+    """
+    Виджет для отображения интерфейса альтернативных подписей линий
+    """
     def __init__(self, parent = None, main_window = None):
         super().__init__()
         logger.info("Инициализация AlternativeLines")
