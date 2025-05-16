@@ -375,6 +375,10 @@ class PlotArea(QWidget):
             "pi": r"\pi",
             "rho": r"\rho",
             "tau": r"\tau",
+            "phi": r"\phi",
+            "omega": r"\omega",
+            "DeltaC": r"\Delta C",
+            "Phi": r"\Phi",
         }
 
         units = UNITS
@@ -391,8 +395,8 @@ class PlotArea(QWidget):
         char = self.group.currentText()
         if char == "":
             char_tex = ""
-        elif char in greek_alf:
-            char_tex = f"\{char}"
+        elif char in greek_alf.keys():
+            char_tex = f"{greek_alf[char]}"
         else:
             char_tex = r"\text{" + char + "}"
 

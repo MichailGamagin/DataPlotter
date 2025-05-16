@@ -125,7 +125,8 @@ def read_TRAP_lent(path) -> pd.DataFrame | None:
             # Создаем DataFrame
             df = pd.DataFrame(data_array, columns=names_new[1:])
             df.insert(0, "Время, с", time_array)
-            return numeric_columns(df)
+            return df
+            # return numeric_columns(df)
 
     except Exception as e:
         return None

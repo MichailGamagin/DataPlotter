@@ -127,4 +127,9 @@ MAIN_CHARS = [
     "tau",
     "gamma",
     "delta",
+    "phi",
+    "omega",
+    "q",
+    "DeltaC",
+    "Phi",
 ]
