@@ -486,10 +486,10 @@ class PlotArea(QWidget):
             text = self.x_settings.currentText()
             if text.isalpha() or text == "":
                 self.x_axis_limit = self.data[time].max()
-                ax.set_xlim(-1.0, self.x_axis_limit)
+                ax.set_xlim(0.0, self.x_axis_limit)
             else:
                 self.x_axis_limit = int(text)
-                ax.set_xlim(-1.0, self.x_axis_limit)
+                ax.set_xlim(0.0, self.x_axis_limit)
             ax.xaxis.set_major_locator(
                 plt.MultipleLocator(
                     self.x_axis_limit / self.x_spacing_grid_spinBox.value()
