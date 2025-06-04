@@ -80,8 +80,16 @@ class MainWindow(QMainWindow):
         self.data_file_path = DEFAULT_FILE_PATH
         self.data = load_data_from(self.data_file_path, ENCODING)
         self.init_ui()
-        self._load_state()
+        reply = QMessageBox.question(
+            self,
+            "Загрузить последний файл состояния?",
+            f"Загрузить последний файл состояния?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
         logger.info("Интерфейс MainWindow успешно инициализирован")
+        if reply != QMessageBox.No:
+            self._load_state()
 
     def init_ui(self):
         logger.info(f"Инициализация пользовательского интерфейса MainWindow")
@@ -277,6 +285,9 @@ class MainWindow(QMainWindow):
                     file_path = state.get("data_file_path", DEFAULT_FILE_PATH)
                     self.path_ent.setText(file_path)
             self.data = load_data_from(file_path, ENCODING)
+            if isinstance(self.data, str):
+                msg = MessageWindow(self.data)
+                msg.exec_()
             for page in self.pages:
                 for combo in page["left"].combos:
                     combo.clear()
@@ -630,6 +641,10 @@ class MainWindow(QMainWindow):
             self.path_ent.setText(self.data_file_path)
             self.path_ent.blockSignals(False)
             self.data = load_data_from(self.data_file_path, ENCODING)
+            if isinstance(self.data, str):
+                msg = MessageWindow(self.data)
+                msg.exec_()
+                raise Exception
             self.alternative_captions = {}
 
             # 3. Воссоздание страниц

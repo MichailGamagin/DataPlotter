@@ -3,6 +3,7 @@
 Описание функций приведено в функциях.
 """
 from struct import unpack
+from collections import Counter
 import pandas as pd
 import numpy as np
 
@@ -10,7 +11,6 @@ from src.core.constants import BASE_DIR, DEFAULT_FILE_PATH
 from src.utils.logger import Logger
 
 logger = Logger.get_logger(__name__)
-
 
 
 def data_KORSAR(path: str, enc: str) -> pd.DataFrame:
@@ -30,7 +30,8 @@ def data_KORSAR(path: str, enc: str) -> pd.DataFrame:
             headers = [next(dat).strip().replace("\n", "") for _ in range(length)]
         data = np.loadtxt(path, encoding=enc, dtype=float, skiprows=length + 1)
         df = pd.DataFrame(data, columns=headers)
-        return numeric_columns(df)
+        # return numeric_columns(df)
+        return df
     except Exception as e:
         return None
 
@@ -56,6 +57,10 @@ def data_TRAP_csv(path: str) -> pd.DataFrame | None:
             replace_eng_with_rus(name) if idx < count_default_TRAP_params else name
             for idx, name in enumerate(col)
         ]
+        dublicates = find_dublicates(col_new)
+        if dublicates:
+            logger.error(f"Набор данных содержит дубликаты параметров: {dublicates}")
+            return f"Набор данных содержит дубликаты параметров:\n{dublicates}"
         df = pd.read_csv(
             path,
             encoding="windows-1251",
@@ -64,7 +69,8 @@ def data_TRAP_csv(path: str) -> pd.DataFrame | None:
             dtype="float64",
             names=col_new,
         )
-        return numeric_columns(df)
+        # return numeric_columns(df)
+        return df
     except Exception as e:
         return None
 
@@ -98,6 +104,10 @@ def read_TRAP_lent(path) -> pd.DataFrame | None:
                 replace_eng_with_rus(name) if idx < count_default_TRAP_params else name
                 for idx, name in enumerate(names)
             ]
+            dublicates = find_dublicates(names_new)
+            if dublicates:
+                logger.error(f"Набор данных содержит дубликаты параметров: {dublicates}")
+                return f"Набор данных содержит дубликаты параметров:\n{dublicates}"
             # Считываем данные и время
             data_list = []
             time_list = []
@@ -220,6 +230,11 @@ def replace_eng_with_rus(text: str) -> str:
             result += char
     return result
 
+def  find_dublicates(string_list):
+    """Функция нахождения дубликатов параметров"""
+    counts = Counter(string_list)
+    dublicates = [s for s, count in counts.items() if count > 1]
+    return dublicates
 
 if __name__ == "__main__":
 
