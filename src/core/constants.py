@@ -16,7 +16,7 @@ COLORS = [
     "red",
     "lime",
     "blue",
-    "brown",
+    "magenta",
     "purple",
     "grey",
     "orange",
