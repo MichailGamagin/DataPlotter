@@ -395,8 +395,9 @@ class MainWindow(QMainWindow):
                     for combo in page["left"].combos
                     if combo.currentText()
                 ]
-                graph_header = f"График №{idx + 1}"
-                alternative_caption = self.alternative_captions.get(graph_header)
+                # Используем ID графика для получения альтернативной подписи
+                graph_id = page.get("id", f"graph_{idx}")
+                alternative_caption = self.alternative_captions.get(graph_id)
                 word_doc.set_caption(idx, labels, self.params, alternative_caption)
             # Удаляем временные файлы
             for f in temp_dir.glob("*.png"):
@@ -432,7 +433,6 @@ class MainWindow(QMainWindow):
 
     def add_page(self):
         """Добавляет новую страницу в стек виджетов."""
-
         logger.info(f"Добавление страницы")
         page = QWidget()
         layout = QHBoxLayout(page)
@@ -446,7 +446,14 @@ class MainWindow(QMainWindow):
         layout.addLayout(vlayout, 1)
         layout.addWidget(plot_area, 4)
 
-        self.pages.append({"widget": page, "left": left_panel, "right": plot_area})
+        page_data = {
+            "widget": page,
+            "left": left_panel,
+            "right": plot_area,
+            "id": f"graph_{len(self.pages)}"  # Добавляем уникальный ID
+        }
+
+        self.pages.append(page_data)
         self.stack.addWidget(page)
         self.current_page = len(self.pages) - 1
         self.stack.setCurrentIndex(self.current_page)
@@ -487,9 +494,15 @@ class MainWindow(QMainWindow):
         layout.addLayout(vlayout, 1)
         layout.addWidget(plot_area, 4)
         self.current_page = self.current_page + 1
-        self.pages.insert(
-            self.current_page, {"widget": page, "left": left_panel, "right": plot_area}
-        )
+
+        page_data = {
+            "widget": page,
+            "left": left_panel,
+            "right": plot_area,
+            "id": f"graph_{len(self.pages)}"  # Добавляем уникальный ID
+        }
+
+        self.pages.insert(self.current_page, page_data)
         self.stack.insertWidget(self.current_page, page)
         self.stack.setCurrentIndex(self.current_page)
         self.pages[self.current_page]["left"].update_label()
@@ -510,9 +523,15 @@ class MainWindow(QMainWindow):
         layout.addLayout(vlayout, 1)
         layout.addWidget(plot_area, 4)
         self.current_page = self.current_page
-        self.pages.insert(
-            self.current_page, {"widget": page, "left": left_panel, "right": plot_area}
-        )
+
+        page_data = {
+            "widget": page,
+            "left": left_panel,
+            "right": plot_area,
+            "id": f"graph_{len(self.pages)}"  # Добавляем уникальный ID
+        }
+
+        self.pages.insert(self.current_page, page_data)
         self.stack.insertWidget(self.current_page, page)
         self.stack.setCurrentIndex(self.current_page)
         self.pages[self.current_page]["left"].update_label()
@@ -582,12 +601,12 @@ class MainWindow(QMainWindow):
                 "pages": [],
             }
             for i, page_data in enumerate(self.pages):
-                # Получаем заголовок графика
-                graph_header = f"График №{i+1}"
+                # Используем ID графика вместо номера
+                graph_id = page_data.get("id", f"graph_{i}")
                 # Получаем альтернативную подпись из self.alternative_captions
-                alternative_caption = self.alternative_captions.get(graph_header, "")
+                alternative_caption = self.alternative_captions.get(graph_id, "")
                 page_state = {
-                    "Number_graph": graph_header,
+                    "id": graph_id,
                     "Symbol_Y": [
                         str(page_data["right"].group.currentText()),
                         str(page_data["right"].sizing_cmb.currentText()),
@@ -662,6 +681,9 @@ class MainWindow(QMainWindow):
                 self.add_page()
                 current_page = self.pages[-1]
 
+                # Устанавливаем ID графика
+                current_page["id"] = page_state.get("id", f"graph_{i}")
+
                 # Загрузка параметров правой части
                 current_page["right"].x_settings.setCurrentText(
                     page_state["Axis_settings"]["X"]
@@ -689,9 +711,9 @@ class MainWindow(QMainWindow):
                     if j < len(current_page["left"].combos):
                         current_page["left"].combos[j].setCurrentText(combo_text)
 
-                # Загрузка альтернативной подписи
-                graph_header = f"{page_state['Number_graph']}"
-                self.alternative_captions[graph_header] = page_state.get(
+                # Загрузка альтернативной подписи по ID
+                graph_id = page_state.get("id", f"graph_{i}")
+                self.alternative_captions[graph_id] = page_state.get(
                     "alternative_caption", ""
                 )
                 self.update_graph()

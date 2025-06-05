@@ -26,6 +26,7 @@ class AlternativeLines(QtWidgets.QWidget):
         self.textEdits = {}
         self.headers = []
         self.cuptions = {}
+        self.graph_ids = {}  # Словарь для хранения ID графиков
         self.init_ui()
         logger.info(f"Инициализация AlternativeLines успешно завершена")
 
@@ -73,6 +74,8 @@ class AlternativeLines(QtWidgets.QWidget):
     def create_pages(self):
         """Создание страниц"""
         for graph_num in range(0, len(self.pages)):
+            graph_id = self.pages[graph_num].get('id', f'graph_{graph_num}')  # Получаем или генерируем ID
+            self.graph_ids[graph_num] = graph_id
             self.add_page(graph_num)
 
     def add_page(self, graph_num: int):
@@ -172,23 +175,30 @@ class AlternativeLines(QtWidgets.QWidget):
             num_graph = self.stack.currentIndex()
         textEdit = self.textEdits[f"{num_graph}"]
         text = textEdit.toPlainText().strip()
-        header = self.headers[num_graph]
-        self.cuptions[header] = text
+        graph_id = self.graph_ids[num_graph]
+        self.cuptions[graph_id] = text
 
     def set_text_to_textEdit(self):
-        """Метод установка текста в textEdit """
-        for i, header in enumerate(self.headers):
-            if header in self.main_window.alternative_captions:
-                text = self.main_window.alternative_captions[header]
+        """Метод установки текста в textEdit с использованием ID графиков"""
+        for i, graph_id in self.graph_ids.items():
+            if graph_id in self.main_window.alternative_captions:
+                text = self.main_window.alternative_captions[graph_id]
                 self.textEdits[f"{i}"].setText(text)
-                self.cuptions[header] = text
+                self.cuptions[graph_id] = text
+
+    def update_alternative_captions(self):
+        """Обновляет словарь альтернативных подписей при изменении графиков"""
+        new_captions = {}
+        for i, graph_id in self.graph_ids.items():
+            if graph_id in self.cuptions:
+                new_captions[graph_id] = self.cuptions[graph_id]
+        self.cuptions = new_captions
 
     def save(self):
         """
-        Сохранение всех изменений в главное окно.
-        Переносит все альтернативные подписи из self.cuptions в self.main_window.alternative_captions.
+        Сохранение всех изменений в главное окно по ID графиков
         """
-        for idx, _ in enumerate(self.headers):
+        for idx in self.graph_ids.keys():
             self.accept_changes(idx)
         self.main_window.alternative_captions.update(self.cuptions)
         QMessageBox.information(
