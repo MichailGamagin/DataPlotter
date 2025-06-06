@@ -5,7 +5,7 @@ from  PyQt5.QtWidgets import QApplication
 
 from src.gui.views.main_window import MainWindow
 from src.utils.logger import Logger
-
+from src import __version__
 
 Logger()
 logger = Logger.get_logger(__name__)
@@ -14,7 +14,7 @@ def main():
     try:
         logger.info("Запуск приложения")
         app = QApplication(sys.argv)
-        window = MainWindow()
+        window = MainWindow(__version__)
         window.show()
         logger.info("Приложение успешно запущено")
         sys.exit(app.exec_())

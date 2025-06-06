@@ -169,7 +169,7 @@ class PlotArea(QWidget):
         self.sizing_cmb_x.currentTextChanged.connect(self.main_window.update_graph)
         self.sizing_cmb_x.setCurrentIndex(0)
         self.group_x = QComboBox()
-        self.group_x.addItems(["с", "s", "ч", "h"])
+        self.group_x.addItems(["s", "с", "h", "ч"])
         self.group_x.setStyleSheet(COMBO_STYLE)
         self.group_x.setEditable(True)
         self.group_x.currentTextChanged.connect(self.main_window.update_graph)
@@ -587,3 +587,19 @@ class PlotArea(QWidget):
         logger.info(
             f"График успешно сохранен в директорию: {directory + filename}"
         )
+    
+    def remove_line(self, combo_idx: int):
+        """Удаляет линию по индексу комбобокса"""
+        if combo_idx in self.lines:
+            line = self.lines[combo_idx]
+            line.remove()
+            del self.lines[combo_idx]
+        handles, labels = self.canvas.ax.get_legend_handles_labels()
+        if len(handles) >=7:
+            ncols = 2
+            fz = 9
+        else:
+            ncols = 1
+            fz = 10
+        self.canvas.ax.legend(handles, labels, fontsize = fz, ncols = ncols)
+        self.canvas.draw_idle()

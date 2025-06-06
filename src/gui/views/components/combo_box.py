@@ -1,9 +1,11 @@
 from PyQt5.QtWidgets import QComboBox, QCompleter
-from PyQt5.QtCore import QStringListModel, Qt
+from PyQt5.QtCore import QStringListModel, Qt, pyqtSignal
 
 # model = QStringListModel
 class MyComboBox(QComboBox):
     """Кастомный выпадающий список"""
+    cleared = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setEditable(True)
@@ -19,6 +21,7 @@ class MyComboBox(QComboBox):
         self.setCompleter(self.completer)
         # self.lineEdit().textEdited.connect(self.update_completer)
         self._original_items = []
+        self.currentTextChanged.connect(self._on_text_changed)
 
     def wheelEvent(self, event):
         """Обработчик события прокрутки колеса мыши - отключение"""
@@ -32,6 +35,9 @@ class MyComboBox(QComboBox):
     def _update_model(self):
         self.model.setStringList(self._original_items)
 
+    def _on_text_changed(self, text):
+        if not text:
+            self.cleared.emit()
     # def update_completer(self, text):
     #     self.completer.setCompletionPrefix(text)
     #     if text:

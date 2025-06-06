@@ -77,6 +77,9 @@ class LeftPanel(QWidget):
                     lambda _, idx=i: self.main_window.plot_selection(idx)
                 )
                 combo.setStyleSheet(COMBO_STYLE_LEFT)
+                combo.cleared.connect(
+                    lambda idx=i: self.main_window.plot_selection(idx)
+                )
                 # combo.setMinimumWidth(400)
                 self.combos.append(combo)
                 form.addRow(lbl, combo)

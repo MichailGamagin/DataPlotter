@@ -66,13 +66,13 @@ class MainWindow(QMainWindow):
         params(dict): словарь для хранения настроек Word для документа(шрифт, интервал и тд)
     """
 
-    def __init__(self):
+    def __init__(self, version: str):
         super().__init__()
         logger.info("Инициализация MainWindow")
         self.pages = []
         self.params = {}
         self.alternative_captions = {}
-
+        self.version = version
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
         self.setStyleSheet(STACK_WIDGET_STYLE)
@@ -85,7 +85,7 @@ class MainWindow(QMainWindow):
             "Загрузить последний файл состояния?",
             f"Загрузить последний файл состояния?",
             QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            QMessageBox.Yes,
         )
         logger.info("Интерфейс MainWindow успешно инициализирован")
         if reply != QMessageBox.No:
@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
         self.update_buttons()
 
         # Window settings
-        self.setWindowTitle("Data Plotter")
+        self.setWindowTitle(f"Data Plotter v{self.version}")
         self.setWindowIcon(QIcon(os.path.join(ICONS_DIR, "icons", "main_icon.png")))
 
         self.word_settings = WordSettings(parent=self).accept()
@@ -572,6 +572,8 @@ class MainWindow(QMainWindow):
         selected_col = combo.currentText()
         if selected_col:
             current_page["right"].update_plot(combo_idx, selected_col)
+        else: 
+            current_page["right"].remove_line(combo_idx)
 
     def save_state(self):
         options = QFileDialog.Options()
