@@ -25,9 +25,10 @@ from PyQt5.QtWidgets import (
     QStatusBar,
     QAction,
     QDesktopWidget,
+    QMenu,
 )
 from PyQt5.QtGui import QIcon, QKeySequence
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QPoint
 
 from src.gui.styles import MY_LINE_EDIT_STYLE, STACK_WIDGET_STYLE
 from src.core.constants import (
@@ -80,6 +81,7 @@ class MainWindow(QMainWindow):
         self.data_file_path = DEFAULT_FILE_PATH
         self.data = load_data_from(self.data_file_path, ENCODING)
         self.init_ui()
+        logger.info("Интерфейс MainWindow успешно инициализирован")
         reply = QMessageBox.question(
             self,
             "Загрузить последний файл состояния?",
@@ -87,9 +89,9 @@ class MainWindow(QMainWindow):
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes,
         )
-        logger.info("Интерфейс MainWindow успешно инициализирован")
         if reply != QMessageBox.No:
             self._load_state()
+        self.init_context_menu()
 
     def init_ui(self):
         logger.info(f"Инициализация пользовательского интерфейса MainWindow")
@@ -249,6 +251,22 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(spacer)
         toolbar.addWidget(self.path_lbl)
         toolbar.addWidget(self.path_ent)
+
+    def init_context_menu(self):
+        """Привязка к каждой странице контекстного меню по правому клику"""
+        for page in self.pages:
+            page['widget'].setContextMenuPolicy(Qt.CustomContextMenu)
+            page["widget"].customContextMenuRequested.connect(self.show_context_menu)
+            shortcut_refresh = QShortcut(QKeySequence("F5"), page["widget"])
+            shortcut_refresh.activated.connect(self.update_graph)
+
+    def show_context_menu(self, pos: QPoint):
+        """Добаление кнопок в контексное меню"""
+        context_menu = QMenu(self)
+        refresh_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "refresh.png")),'Обновить',self)
+        refresh_action.triggered.connect(self.update_graph)
+        context_menu.addAction(refresh_action)
+        context_menu.exec_(self.stack.mapToGlobal(pos))
 
     def center(self):
         """Центрирование главного окна окна"""
@@ -507,6 +525,7 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(self.current_page)
         self.pages[self.current_page]["left"].update_label()
         self.update_buttons()
+        self.init_context_menu()
         logger.info(f"Добавлена страница №{self.current_page + 1}")
 
     def insert_page_left(self):
@@ -536,6 +555,7 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(self.current_page)
         self.pages[self.current_page]["left"].update_label()
         self.update_buttons()
+        self.init_context_menu()
         logger.info(f"Добавлена страница №{self.current_page + 1}")
 
     def update_buttons(self):
@@ -865,6 +885,7 @@ class MainWindow(QMainWindow):
         """Очистка главного окна от всех виджетов"""
         for page in self.pages:
             self.stack.removeWidget(page["widget"])
+        self.init_context_menu()
 
 
 if __name__ == "__main__":
