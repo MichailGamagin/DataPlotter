@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QDesktopWidget,
     QMenu,
+    QTableView,
 )
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt, QPoint
@@ -48,6 +49,7 @@ from src.gui.views.dialogs.message import MessageWindow
 from src.gui.views.dialogs.progress import MyProgressDialog
 from src.gui.views.word.settings import WordSettings
 from src.gui.views.word.word_export import Word
+from src.gui.views.components.data_table import  DataTableView
 from src.utils.logger import Logger
 
 logger = Logger.get_logger(__name__)
@@ -255,7 +257,11 @@ class MainWindow(QMainWindow):
     def init_context_menu(self):
         """Привязка к каждой странице контекстного меню по правому клику"""
         for page in self.pages:
-            page['widget'].setContextMenuPolicy(Qt.CustomContextMenu)
+            try:
+                page["widget"].customContextMenuRequested.disconnect()
+            except:
+                pass
+            page["widget"].setContextMenuPolicy(Qt.CustomContextMenu)
             page["widget"].customContextMenuRequested.connect(self.show_context_menu)
             shortcut_refresh = QShortcut(QKeySequence("F5"), page["widget"])
             shortcut_refresh.activated.connect(self.update_graph)
@@ -263,10 +269,16 @@ class MainWindow(QMainWindow):
     def show_context_menu(self, pos: QPoint):
         """Добаление кнопок в контексное меню"""
         context_menu = QMenu(self)
-        refresh_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "refresh.png")),'Обновить',self)
+        refresh_action = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "refresh64x64.png")), "Обновить", self
+        )
         refresh_action.triggered.connect(self.update_graph)
         context_menu.addAction(refresh_action)
+        self.show_data_action = QAction( QIcon(os.path.join(ICONS_DIR, "icons", "table64x64.png")),"Показать данные", self)
+        self.show_data_action.triggered.connect(self.show_data)
+        context_menu.addAction(self.show_data_action)
         context_menu.exec_(self.stack.mapToGlobal(pos))
+        # self.show_data_action.triggered.disconnect()
 
     def center(self):
         """Центрирование главного окна окна"""
@@ -468,7 +480,7 @@ class MainWindow(QMainWindow):
             "widget": page,
             "left": left_panel,
             "right": plot_area,
-            "id": f"graph_{len(self.pages)}"  # Добавляем уникальный ID
+            "id": f"graph_{len(self.pages)}",  # Добавляем уникальный ID
         }
 
         self.pages.append(page_data)
@@ -517,7 +529,7 @@ class MainWindow(QMainWindow):
             "widget": page,
             "left": left_panel,
             "right": plot_area,
-            "id": f"graph_{len(self.pages)}"  # Добавляем уникальный ID
+            "id": f"graph_{len(self.pages)}",  # Добавляем уникальный ID
         }
 
         self.pages.insert(self.current_page, page_data)
@@ -547,7 +559,7 @@ class MainWindow(QMainWindow):
             "widget": page,
             "left": left_panel,
             "right": plot_area,
-            "id": f"graph_{len(self.pages)}"  # Добавляем уникальный ID
+            "id": f"graph_{len(self.pages)}",  # Добавляем уникальный ID
         }
 
         self.pages.insert(self.current_page, page_data)
@@ -592,7 +604,7 @@ class MainWindow(QMainWindow):
         selected_col = combo.currentText()
         if selected_col:
             current_page["right"].update_plot(combo_idx, selected_col)
-        else: 
+        else:
             current_page["right"].remove_line(combo_idx)
 
     def save_state(self):
@@ -776,7 +788,7 @@ class MainWindow(QMainWindow):
         if self.state_file_path != "":
             try:
                 self._load_state(self.state_file_path)
-
+                self.init_context_menu()
             except Exception as e:
                 msg = MessageWindow(
                     f"Ошибка загрузки состояния из файла:\n{self.state_file_path}",
@@ -887,6 +899,11 @@ class MainWindow(QMainWindow):
             self.stack.removeWidget(page["widget"])
         self.init_context_menu()
 
+    def show_data(self):
+        self.data_table = DataTableView(self)
+        self.data_table.set_data(self.data)
+        self.data_table.setWindowModality(Qt.ApplicationModal)
+        self.data_table.show()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

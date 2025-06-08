@@ -32,6 +32,11 @@ class MyComboBox(QComboBox):
         self._original_items.extend(list)
         self._update_model()
 
+    def insertItems(self, index: int, list: list):
+        super().insertItems(index, list)
+        self._original_items.extend(list)
+        self._update_model()
+
     def _update_model(self):
         self.model.setStringList(self._original_items)
 
