@@ -32,7 +32,7 @@ python main.py
 
 ## Требования
 
-- Python 3.8+
+- Python 3.13+
 - PyQt5
 - pandas
 - matplotlib 

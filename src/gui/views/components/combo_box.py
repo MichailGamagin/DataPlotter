@@ -19,7 +19,6 @@ class MyComboBox(QComboBox):
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setMaxVisibleItems(30)
         self.setCompleter(self.completer)
-        # self.lineEdit().textEdited.connect(self.update_completer)
         self._original_items = []
         self.currentTextChanged.connect(self._on_text_changed)
 
@@ -43,9 +42,11 @@ class MyComboBox(QComboBox):
     def _on_text_changed(self, text):
         if not text:
             self.cleared.emit()
-    # def update_completer(self, text):
-    #     self.completer.setCompletionPrefix(text)
-    #     if text:
-    #         self.showPopup()
-    #     else: 
-    #         self.hidePopup()
+
+    def enterEvent(self, event):
+        super().enterEvent(event)
+        self.setToolTip(self.currentText())
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self.setToolTip("")

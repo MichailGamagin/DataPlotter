@@ -7,8 +7,10 @@
 import sys
 import os
 import yaml
+import re
 
 from pathlib import Path
+
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -26,7 +28,6 @@ from PyQt5.QtWidgets import (
     QAction,
     QDesktopWidget,
     QMenu,
-    QTableView,
 )
 from PyQt5.QtGui import QIcon, QKeySequence
 from PyQt5.QtCore import Qt, QPoint
@@ -627,6 +628,8 @@ class MainWindow(QMainWindow):
         if not file_name.endswith(".yaml"):
             file_name = file_name + ".yaml"
         logger.info(f"Сохранение состояния в директорию: {file_name}")
+        self.state_additional_data = []
+
         if file_name:
             path = Path(self.path_ent.text())
             state = {
@@ -663,7 +666,10 @@ class MainWindow(QMainWindow):
                 for combo in page_data["left"].combos:
                     text = combo.currentText()
                     page_state["Lists"].append(text)
+                    if text not in self.state_additional_data and text.startswith("$") and text.endswith("$") and text != '' and text != ' ':
+                        self.state_additional_data.append(text)
                 state["pages"].append(page_state)
+                state["_Additional_data"] = self.state_additional_data
 
             with open(file_name, "w", encoding="cp1251") as f:
                 yaml.dump(state, f, indent=2, allow_unicode=True)
@@ -694,6 +700,8 @@ class MainWindow(QMainWindow):
             self.path_ent.setText(self.data_file_path)
             self.path_ent.blockSignals(False)
             self.data = load_data_from(self.data_file_path, ENCODING)
+            self.state_additional_data = state.get("_Additional_data", [])
+            self.unpuck_additional_data(self.state_additional_data)
             if isinstance(self.data, str):
                 msg = MessageWindow(self.data)
                 msg.exec_()
@@ -744,7 +752,6 @@ class MainWindow(QMainWindow):
                 for j, combo_text in enumerate(page_state["Lists"]):
                     if j < len(current_page["left"].combos):
                         current_page["left"].combos[j].setCurrentText(combo_text)
-
                 # Загрузка альтернативной подписи по ID
                 graph_id = page_state.get("id", f"graph_{i}")
                 self.alternative_captions[graph_id] = page_state.get(
@@ -771,6 +778,94 @@ class MainWindow(QMainWindow):
             logger.error(f"Ошибка при загрузке состояния: {str(e)}", exc_info=True)
         finally:
             progress.close()
+
+    def unpuck_additional_data(self, list_params: list):
+        """
+        Обрабатывает дополнительные параметры из yaml файла используя функционал DataTableView
+        
+        Args:
+            list_params (list): список параметров которые нужно вычислить
+        """
+        if not list_params:
+            return
+        list_params = list(list_params) 
+            
+        try:
+            # Регулярные выражения для разных типов операций
+            # Формат: $(param)op(value)$, где op может быть +,-,*,/
+            operation_pattern = r'^\$\((.*?)\)([\+\-\*/])\((.*?)\)\$$'
+            integral_pattern = r'^\$Integral\((.*?)\)\$$'
+            
+            # Создаем временную таблицу для обработки данных
+            table = DataTableView(self)
+            table.set_data(self.data.copy())
+            
+            # Словарь соответствия операторов и методов
+            operations_map = {
+                '+': (table.model._operations.add_constant, table.model._operations.add_columns),
+                '-': (table.model._operations.subtract_constant, table.model._operations.subtract_columns),
+                '*': (table.model._operations.multiply_constant, None),
+                '/': (table.model._operations.divide_constant, None)
+            }
+            
+            for param_name in list_params:
+                try:
+                    # Проверяем на операцию с константой или между столбцами
+                    match = re.match(operation_pattern, param_name)
+                    if match:
+                        param1, operator, param2 = match.groups()
+                        
+                        # Пытаемся преобразовать param2 в число
+                        try:
+                            constant = float(param2)
+                            # Операция с константой
+                            constant_operation, _ = operations_map[operator]
+                            if constant_operation:
+                                table.model.perform_constant_operation(
+                                    constant_operation,
+                                    param1,
+                                    constant
+                                )
+                            else:
+                                logger.warning(f"Операция {operator} с константой не поддерживается")
+                                
+                        except ValueError:
+                            # Операция между столбцами
+                            _, columns_operation = operations_map[operator]
+                            if columns_operation:
+                                table.model.perform_operation(
+                                    columns_operation,
+                                    param1,
+                                    param2
+                                )
+                            else:
+                                logger.warning(f"Операция {operator} между столбцами не поддерживается")
+                                
+                    # Проверяем на интеграл
+                    match = re.match(integral_pattern, param_name)
+                    if match:
+                        param = match.group(1)
+                        table.model.perform_integral(
+                            table.model._operations.integral,
+                            self.data.columns[0],
+                            param
+                        )
+                        
+                except Exception as e:
+                    logger.error(f"Ошибка при выполнении операции для {param_name}: {str(e)}")
+                    continue
+            
+            # Получаем обновленные данные
+            self.data = table.get_data()      
+            logger.info(f"Успешно добавлены вычисленные параметры: {list_params}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка при обработке дополнительных параметров: {str(e)}", exc_info=True)
+            QMessageBox.warning(
+                self,
+                "Предупреждение",
+                f"Ошибка при обработке дополнительных параметров: {str(e)}"
+            )
 
     def load_state(self):
         options = QFileDialog.Options()
@@ -801,7 +896,6 @@ class MainWindow(QMainWindow):
         # Запрос директории сохранения
         options = QFileDialog.Options()
         options |= QFileDialog.ShowDirsOnly  # Показываем только папки
-        # options |= QFileDialog.DontUseNativeDialog
         path = self.path_ent.text()
         if path:
             home_dir = Path(path).parent.as_posix()

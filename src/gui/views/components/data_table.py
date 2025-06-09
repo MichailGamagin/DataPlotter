@@ -36,6 +36,16 @@ class DataOperations:
     def subtract_constant(df: pd.DataFrame, col1: str, constant: np.float64) -> pd.Series:
         """Вычитание столбца с константой"""
         return df[col1] - constant
+    
+    @staticmethod
+    def multiply_constant(df: pd.DataFrame, col1: str, constant: np.float64) -> pd.Series:
+        """Умножение столбца с константой"""
+        return df[col1] * constant
+    
+    @staticmethod
+    def divide_constant(df: pd.DataFrame, col1: str, constant: np.float64) -> pd.Series:
+        """Деление столбца с константой"""
+        return df[col1] / constant
 
     @staticmethod
     def integral(df: pd.DataFrame, time_col: str , param_col: str) -> pd.Series:
@@ -56,7 +66,7 @@ class DataOperations:
         except Exception as e:
             logger.error(f"Ошибка при вычислении интеграла: {str(e)}")
             return pd.Series([], name=f"Интеграл_{param_col}")
-    
+
 class DataModel(QAbstractTableModel):
     """
     Виджет для отображения данных в формате таблицы.
@@ -76,22 +86,24 @@ class DataModel(QAbstractTableModel):
     def _init_context_menu(self) -> None:
         """Инициализация контекстного меню"""
         self.context_menu = QMenu()
-        
+
         # Подменю для арифметических операций
         self.arithmetic_menu = QMenu("Арифметические операции")
         self.arithmetic_menu.setIcon(QIcon(os.path.join(ICONS_DIR, "icons", "arifmetic50x50.png")))
-        
+
         # Действия для операций
         self.add_constant_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "plus-64.png")),"Сложить с константой", self)
         self.subtract_constant_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "minus-48.png")),"Вычесть константу", self)
         self.add_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "add_col-48.png")),"Сложить с другим столбцом", self)
         self.subtract_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "sub_col-48.png")),"Вычесть другой столбец", self)
         self.integral_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "integral-50.png")),"Интеграл столбца", self)
-
-        
+        self.multiply_constant_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "multiply-64.png")),"Умножить на константу", self)
+        self.divide_constant_action = QAction(QIcon(os.path.join(ICONS_DIR, "icons", "divide-60.png")),"Разделить на константу", self)
         # Добавление действий в подменю
         self.arithmetic_menu.addAction(self.add_constant_action)
         self.arithmetic_menu.addAction(self.subtract_constant_action)
+        self.arithmetic_menu.addAction(self.multiply_constant_action)
+        self.arithmetic_menu.addAction(self.divide_constant_action)
         self.arithmetic_menu.addAction(self.add_action)
         self.arithmetic_menu.addAction(self.subtract_action)
         self.arithmetic_menu.addAction(self.integral_action)
@@ -109,21 +121,30 @@ class DataModel(QAbstractTableModel):
         """Выполнение операции над столбцами"""
         try:
             result = operation(self._data, col1, col2)
-            new_col_name = f"{col1}_{operation.__name__}_{col2}"
+            if operation == self._operations.add_columns:
+                new_col_name = f"$({col1})+({col2})$"
+            elif operation == self._operations.subtract_columns:
+                new_col_name = f"$({col1})-({col2})$"
+            else:
+                new_col_name = f"{col1}_{operation.__name__}_{col2}"
             # Добавляем новый столбец с результатом
             self.add_column(new_col_name, result)
             self.dataChanged.emit()
         except Exception as e:
             QMessageBox.warning(None, "Ошибка", f"Ошибка при выполнении операции: {str(e)}")
             logger.error(f"Ошибка при выполнении операции: {str(e)}")
-    
+
     def perform_constant_operation(self, operation: Callable, col1: str, constant: float) -> None:
         """Выполнение операции с константой"""
         result = operation(self._data, col1, constant)
         if operation == self._operations.add_constant:
-            new_col_name = f"{col1}+({constant})"
+            new_col_name = f"$({col1})+({constant})$"
         elif operation == self._operations.subtract_constant:
-            new_col_name = f"{col1}-({constant})"
+            new_col_name = f"$({col1})-({constant})$"
+        elif operation == self._operations.multiply_constant:
+            new_col_name = f"$({col1})*({constant})$"
+        elif operation == self._operations.divide_constant:
+            new_col_name = f"$({col1})/({constant})$"
         else:
             new_col_name = f"{col1}_{operation.__name__}_{constant}"
         self.add_column(new_col_name, result)
@@ -132,7 +153,7 @@ class DataModel(QAbstractTableModel):
     def perform_integral(self, operation: Callable, time_col: str, col1: str) -> None:
         """Выполнение операции интеграла"""
         result = operation(self._data, time_col, col1)
-        new_col_name = f"Интеграл_{col1}"
+        new_col_name = f"$Integral({col1})$"
         self.add_column(new_col_name, result)
         self.dataChanged.emit()
 
@@ -145,6 +166,8 @@ class DataModel(QAbstractTableModel):
         self.integral_action.triggered.disconnect()
         self.add_constant_action.triggered.disconnect()
         self.subtract_constant_action.triggered.disconnect()
+        self.multiply_constant_action.triggered.disconnect()
+        self.divide_constant_action.triggered.disconnect()
         # Настройка действий
         self.add_action.triggered.connect(
             lambda: self._handle_binary_operation(self._operations.add_columns, current_column)
@@ -160,6 +183,12 @@ class DataModel(QAbstractTableModel):
         )
         self.subtract_constant_action.triggered.connect(
             lambda: self._handle_constant_operation(self._operations.subtract_constant, current_column)
+        )
+        self.multiply_constant_action.triggered.connect(
+            lambda: self._handle_constant_operation(self._operations.multiply_constant, current_column)
+        )
+        self.divide_constant_action.triggered.connect(
+            lambda: self._handle_constant_operation(self._operations.divide_constant, current_column)
         )
         # Показываем меню
         self.context_menu.exec_(pos)
@@ -177,7 +206,7 @@ class DataModel(QAbstractTableModel):
         )
         if ok and col2:
             self.perform_operation(operation, col1, col2)
-    
+
     def _handle_integral_operation(self, operation: Callable, col1: str) -> None:
         """Обработка операции интеграла"""
         time_col = self._data.columns[0]
@@ -193,10 +222,13 @@ class DataModel(QAbstractTableModel):
 
     def _handle_constant_operation(self, operation: Callable, col1: str) -> None:
         """Обработка операции с константой"""
-        constant, ok = QInputDialog.getText(
+        constant, ok = QInputDialog.getDouble(
             None,
             "Ввод константы",
             f"Введите константу для столбца '{col1}':",
+            value=0,
+            decimals=10,
+
         )
         if ok:
             try:
@@ -209,11 +241,11 @@ class DataModel(QAbstractTableModel):
     def rowCount(self, parent: Optional[Any] = None) -> int:
         """Возвращает количество строк в таблице"""
         return self._data.shape[0]
-    
+
     def columnCount(self, parent: Optional[Any] = None) -> int:
         """Возвращает количество столбцов в таблице"""
         return self._data.shape[1]
-    
+
     def data(self, index: Any, role: int = Qt.DisplayRole) -> Optional[str]:
         """Возвращает данные для отображения в ячейке"""
         if not index.isValid():
@@ -221,7 +253,7 @@ class DataModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return str(self._data.iloc[index.row(), index.column()])
         return None
-    
+
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> Optional[str]:
         if orientation == Qt.Horizontal:
             header_text = str(self._data.columns[section])
@@ -233,13 +265,13 @@ class DataModel(QAbstractTableModel):
         elif orientation == Qt.Vertical:
             if role == Qt.DisplayRole:
                 return str(self._data.index[section])
-                
+
         return None
 
     def get_data(self) -> pd.DataFrame:
         """Получить DataFrame с данными"""
         return self._data
-    
+
 class DataTableView(QTableView):
     """
     Виджет таблицы 
