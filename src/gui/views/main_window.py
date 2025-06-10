@@ -491,6 +491,7 @@ class MainWindow(QMainWindow):
         self.pages[self.current_page]["left"].update_label()
         self.update_buttons()
         self.stack.setCurrentIndex(self.current_page)
+        self.init_context_menu()
         logger.info(f"Добавлена страница №{self.current_page + 1}")
 
     def remove_page(self):
