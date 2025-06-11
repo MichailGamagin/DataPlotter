@@ -50,7 +50,8 @@ from src.gui.views.dialogs.message import MessageWindow
 from src.gui.views.dialogs.progress import MyProgressDialog
 from src.gui.views.word.settings import WordSettings
 from src.gui.views.word.word_export import Word
-from src.gui.views.components.data_table import  DataTableView
+from src.gui.views.components.data_table import DataTableView
+from src.gui.views.components.buffer import Buffer
 from src.utils.logger import Logger
 
 logger = Logger.get_logger(__name__)
@@ -100,7 +101,7 @@ class MainWindow(QMainWindow):
         logger.info(f"Инициализация пользовательского интерфейса MainWindow")
         self.init_menu()
         self.init_toolbar()
-
+        self.buffer = Buffer()
         self.shortcut_right = QShortcut(QKeySequence("Right"), self)
         self.shortcut_right.activated.connect(self.next_page)
         self.shortcut_left = QShortcut(QKeySequence("Left"), self)
@@ -271,15 +272,75 @@ class MainWindow(QMainWindow):
         """Добаление кнопок в контексное меню"""
         context_menu = QMenu(self)
         refresh_action = QAction(
-            QIcon(os.path.join(ICONS_DIR, "icons", "refresh64x64.png")), "Обновить", self
+            QIcon(os.path.join(ICONS_DIR, "icons", "refresh64x64.png")),
+            "Обновить",
+            self,
         )
         refresh_action.triggered.connect(self.update_graph)
         context_menu.addAction(refresh_action)
-        self.show_data_action = QAction( QIcon(os.path.join(ICONS_DIR, "icons", "table64x64.png")),"Показать данные", self)
+        self.show_data_action = QAction(
+            QIcon(os.path.join(ICONS_DIR, "icons", "table64x64.png")),
+            "Показать данные",
+            self,
+        )
         self.show_data_action.triggered.connect(self.show_data)
         context_menu.addAction(self.show_data_action)
+        copy = QAction(
+            "Копировать",
+            self,
+        )
+        copy.triggered.connect(self.copy_graph)
+        context_menu.addAction(copy)
+        paste = QAction(
+            "Вставить",
+            self,
+        )
+        paste.triggered.connect(self.paste_graph)
+        context_menu.addAction(paste)
         context_menu.exec_(self.stack.mapToGlobal(pos))
-        # self.show_data_action.triggered.disconnect()
+
+    def copy_graph(self):
+        """Копирование"""
+        id_graph = f"graph_{self.current_page}"
+        alt_caption = self.alternative_captions[id_graph]
+        self.buffer.copy(self.pages[self.current_page], alt_caption)
+
+    def paste_graph(self):
+        """Вставка"""
+        left_panel, plot_area, alt_caption = self.buffer.paste()
+
+        for combo_idx, combo in enumerate(self.pages[self.current_page]["left"].combos):
+            combo.setCurrentText(left_panel[combo_idx])
+        self.pages[self.current_page]["right"].disconnect_signals()
+
+        self.pages[self.current_page]["right"].group.setCurrentText(
+            plot_area["Y_axis"]["group"]
+        )
+        self.pages[self.current_page]["right"].y_settings.setText(
+            plot_area["Y_axis"]["limits"]
+        )
+        self.pages[self.current_page]["right"].sizing_cmb.setCurrentText(
+            plot_area["Y_axis"]["sizing"]
+        )
+        self.pages[self.current_page]["right"].group_x.setCurrentText(
+            plot_area["X_axis"]["group"]
+        )
+        self.pages[self.current_page]["right"].x_settings.setCurrentText(
+            plot_area["X_axis"]["limits"]
+        )
+        self.pages[self.current_page]["right"].sizing_cmb_x.setCurrentText(
+            plot_area["X_axis"]["sizing"]
+        )
+        self.pages[self.current_page]["right"].markers.setCurrentText(
+            plot_area["marker_freq"]
+        )
+        self.pages[self.current_page]["right"].x_spacing_grid_spinBox.setValue(
+            plot_area["line_spacing"]
+        )
+        self.pages[self.current_page]["right"].connect_signals()
+        id_graph = f"graph_{self.current_page}"
+        self.alternative_captions.update({id_graph: alt_caption})
+        self.update_graph()
 
     def center(self):
         """Центрирование главного окна окна"""
@@ -495,22 +556,30 @@ class MainWindow(QMainWindow):
         logger.info(f"Добавлена страница №{self.current_page + 1}")
 
     def remove_page(self):
-        logger.info(f"Удаление страницы")
-        if len(self.pages) > 1:
-            page_to_remove = self.pages.pop(self.current_page)
-            self.stack.removeWidget(page_to_remove["widget"])
-            page_to_remove["widget"].deleteLater()
-            if self.current_page >= len(self.pages):
-                self.current_page = len(self.pages) - 1
-            self.stack.setCurrentIndex(self.current_page)
-            self.pages[self.current_page]["left"].update_label()
-            self.update_buttons()
-            logger.info(f"Удалена страница №{self.current_page + 1}")
-        else:
-            msg = MessageWindow(
-                "Невозможно удалить", "Невозможно удалить последнюю страницу"
-            )
-            msg.exec_()
+        reply = QMessageBox.question(
+            self,
+            "Подтверждение",
+            "Удалить график?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes,
+        )
+        if reply == QMessageBox.Yes:
+            logger.info(f"Удаление страницы")
+            if len(self.pages) > 1:
+                page_to_remove = self.pages.pop(self.current_page)
+                self.stack.removeWidget(page_to_remove["widget"])
+                page_to_remove["widget"].deleteLater()
+                if self.current_page >= len(self.pages):
+                    self.current_page = len(self.pages) - 1
+                self.stack.setCurrentIndex(self.current_page)
+                self.pages[self.current_page]["left"].update_label()
+                self.update_buttons()
+                logger.info(f"Удалена страница №{self.current_page + 1}")
+            else:
+                msg = MessageWindow(
+                    "Невозможно удалить", "Невозможно удалить последнюю страницу"
+                )
+                msg.exec_()
 
     def insert_page_right(self):
         logger.info(f"Добавление страницы")
@@ -667,7 +736,13 @@ class MainWindow(QMainWindow):
                 for combo in page_data["left"].combos:
                     text = combo.currentText()
                     page_state["Lists"].append(text)
-                    if text not in self.state_additional_data and text.startswith("$") and text.endswith("$") and text != '' and text != ' ':
+                    if (
+                        text not in self.state_additional_data
+                        and text.startswith("$")
+                        and text.endswith("$")
+                        and text != ""
+                        and text != " "
+                    ):
                         self.state_additional_data.append(text)
                 state["pages"].append(page_state)
                 state["_Additional_data"] = self.state_additional_data
@@ -675,6 +750,7 @@ class MainWindow(QMainWindow):
             with open(file_name, "w", encoding="cp1251") as f:
                 yaml.dump(state, f, indent=2, allow_unicode=True)
             self.write_path(file_name)
+            self.change_status(file_name)
             logger.info(f"Состояние успешно сохранено в директорию {file_name}")
 
     def _load_state(self, file_path=SAVE_FILE.read_text()):
@@ -783,39 +859,45 @@ class MainWindow(QMainWindow):
     def unpuck_additional_data(self, list_params: list):
         """
         Обрабатывает дополнительные параметры из yaml файла используя функционал DataTableView
-        
+
         Args:
             list_params (list): список параметров которые нужно вычислить
         """
         if not list_params:
             return
-        list_params = list(list_params) 
-            
+        list_params = list(list_params)
+
         try:
             # Регулярные выражения для разных типов операций
             # Формат: $(param)op(value)$, где op может быть +,-,*,/
-            operation_pattern = r'^\$\((.*?)\)([\+\-\*/])\((.*?)\)\$$'
-            integral_pattern = r'^\$Integral\((.*?)\)\$$'
-            
+            operation_pattern = r"^\$\((.*?)\)([\+\-\*/])\((.*?)\)\$$"
+            integral_pattern = r"^\$Integral\((.*?)\)\$$"
+
             # Создаем временную таблицу для обработки данных
             table = DataTableView(self)
             table.set_data(self.data.copy())
-            
+
             # Словарь соответствия операторов и методов
             operations_map = {
-                '+': (table.model._operations.add_constant, table.model._operations.add_columns),
-                '-': (table.model._operations.subtract_constant, table.model._operations.subtract_columns),
-                '*': (table.model._operations.multiply_constant, None),
-                '/': (table.model._operations.divide_constant, None)
+                "+": (
+                    table.model._operations.add_constant,
+                    table.model._operations.add_columns,
+                ),
+                "-": (
+                    table.model._operations.subtract_constant,
+                    table.model._operations.subtract_columns,
+                ),
+                "*": (table.model._operations.multiply_constant, None),
+                "/": (table.model._operations.divide_constant, None),
             }
-            
+
             for param_name in list_params:
                 try:
                     # Проверяем на операцию с константой или между столбцами
                     match = re.match(operation_pattern, param_name)
                     if match:
                         param1, operator, param2 = match.groups()
-                        
+
                         # Пытаемся преобразовать param2 в число
                         try:
                             constant = float(param2)
@@ -823,25 +905,25 @@ class MainWindow(QMainWindow):
                             constant_operation, _ = operations_map[operator]
                             if constant_operation:
                                 table.model.perform_constant_operation(
-                                    constant_operation,
-                                    param1,
-                                    constant
+                                    constant_operation, param1, constant
                                 )
                             else:
-                                logger.warning(f"Операция {operator} с константой не поддерживается")
-                                
+                                logger.warning(
+                                    f"Операция {operator} с константой не поддерживается"
+                                )
+
                         except ValueError:
                             # Операция между столбцами
                             _, columns_operation = operations_map[operator]
                             if columns_operation:
                                 table.model.perform_operation(
-                                    columns_operation,
-                                    param1,
-                                    param2
+                                    columns_operation, param1, param2
                                 )
                             else:
-                                logger.warning(f"Операция {operator} между столбцами не поддерживается")
-                                
+                                logger.warning(
+                                    f"Операция {operator} между столбцами не поддерживается"
+                                )
+
                     # Проверяем на интеграл
                     match = re.match(integral_pattern, param_name)
                     if match:
@@ -849,23 +931,28 @@ class MainWindow(QMainWindow):
                         table.model.perform_integral(
                             table.model._operations.integral,
                             self.data.columns[0],
-                            param
+                            param,
                         )
-                        
+
                 except Exception as e:
-                    logger.error(f"Ошибка при выполнении операции для {param_name}: {str(e)}")
+                    logger.error(
+                        f"Ошибка при выполнении операции для {param_name}: {str(e)}"
+                    )
                     continue
-            
+
             # Получаем обновленные данные
-            self.data = table.get_data()      
+            self.data = table.get_data()
             logger.info(f"Успешно добавлены вычисленные параметры: {list_params}")
-            
+
         except Exception as e:
-            logger.error(f"Ошибка при обработке дополнительных параметров: {str(e)}", exc_info=True)
+            logger.error(
+                f"Ошибка при обработке дополнительных параметров: {str(e)}",
+                exc_info=True,
+            )
             QMessageBox.warning(
                 self,
                 "Предупреждение",
-                f"Ошибка при обработке дополнительных параметров: {str(e)}"
+                f"Ошибка при обработке дополнительных параметров: {str(e)}",
             )
 
     def load_state(self):
@@ -999,6 +1086,7 @@ class MainWindow(QMainWindow):
         self.data_table.set_data(self.data)
         self.data_table.setWindowModality(Qt.ApplicationModal)
         self.data_table.show()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

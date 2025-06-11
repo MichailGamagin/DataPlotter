@@ -587,7 +587,7 @@ class PlotArea(QWidget):
         logger.info(
             f"График успешно сохранен в директорию: {directory + filename}"
         )
-    
+
     def remove_line(self, combo_idx: int):
         """Удаляет линию по индексу комбобокса"""
         if combo_idx in self.lines:
@@ -603,3 +603,17 @@ class PlotArea(QWidget):
             fz = 10
         self.canvas.ax.legend(handles, labels, fontsize = fz, ncols = ncols)
         self.canvas.draw_idle()
+
+    def disconnect_signals(self):
+        self.group.currentTextChanged.disconnect()
+        self.group_x.currentTextChanged.disconnect()
+        self.x_settings.currentTextChanged.disconnect()
+        self.sizing_cmb_x.currentTextChanged.disconnect()
+        self.sizing_cmb.currentTextChanged.disconnect()
+
+    def connect_signals(self):
+        self.group.currentTextChanged.connect(self.main_window.update_graph)
+        self.group_x.currentTextChanged.connect(self.main_window.update_graph)
+        self.x_settings.currentTextChanged.connect(self.main_window.update_graph)
+        self.sizing_cmb_x.currentTextChanged.connect(self.main_window.update_graph)
+        self.sizing_cmb.currentTextChanged.connect(self.main_window.update_graph)
