@@ -302,7 +302,7 @@ class MainWindow(QMainWindow):
     def copy_graph(self):
         """Копирование"""
         id_graph = f"graph_{self.current_page}"
-        alt_caption = self.alternative_captions[id_graph]
+        alt_caption = self.alternative_captions.get(id_graph, '')
         self.buffer.copy(self.pages[self.current_page], alt_caption)
 
     def paste_graph(self):
