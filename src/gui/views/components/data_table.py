@@ -156,9 +156,9 @@ class DataModel(QAbstractTableModel):
         self.arithmetic_menu.addAction(self.add_action)
         self.arithmetic_menu.addAction(self.subtract_action)
         self.arithmetic_menu.addAction(self.integral_action)
-        self.arithmetic_menu.addAction(self.hor_line_action)
         # Добавление подменю в основное меню
         self.context_menu.addMenu(self.arithmetic_menu)
+        self.context_menu.addAction(self.hor_line_action)
 
     def add_column(self, column_name: str, data: pd.Series) -> None:
         """Добавление нового столбца в таблицу"""

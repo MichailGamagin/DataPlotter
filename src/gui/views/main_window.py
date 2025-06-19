@@ -344,13 +344,10 @@ class MainWindow(QMainWindow):
 
     def center(self):
         """Центрирование главного окна окна"""
-        screen = QDesktopWidget().screenGeometry()
-        size = self.geometry()
-        window_width = size.width()
-        window_height = size.height()
-        x = (screen.width() - window_width) // 2
-        y = (screen.height() - window_height) // 2
-        self.move(x, y)
+        screen = self.frameGeometry()
+        center = QDesktopWidget().availableGeometry().center()
+        screen.moveCenter(center)
+        self.move(screen.topLeft())
 
     def showEvent(self, event):
         """Обработчик события отображения окна на экране"""
