@@ -872,6 +872,7 @@ class MainWindow(QMainWindow):
             # Формат: $(param)op(value)$, где op может быть +,-,*,/
             operation_pattern = r"^\$\((.*?)\)([\+\-\*/])\((.*?)\)\$$"
             integral_pattern = r"^\$Integral\((.*?)\)\$$"
+            horizontal_pattern = r"\$Horizontal\((.*?)\)\$$"
 
             # Создаем временную таблицу для обработки данных
             table = DataTableView(self)
@@ -916,7 +917,7 @@ class MainWindow(QMainWindow):
                             # Операция между столбцами
                             _, columns_operation = operations_map[operator]
                             if columns_operation:
-                                table.model.perform_operation(
+                                table.model.perform_constant_operation(
                                     columns_operation, param1, param2
                                 )
                             else:
@@ -933,7 +934,14 @@ class MainWindow(QMainWindow):
                             self.data.columns[0],
                             param,
                         )
-
+                    # Проверяем на горизонтальную линию
+                    match = re.match(horizontal_pattern, param_name)
+                    if match:
+                        param = match.group(1)
+                        table.model.perform_horizontal(
+                            table.model._operations.horizontal,
+                            float(param),
+                        )
                 except Exception as e:
                     logger.error(
                         f"Ошибка при выполнении операции для {param_name}: {str(e)}"

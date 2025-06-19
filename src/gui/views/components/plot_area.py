@@ -308,14 +308,10 @@ class PlotArea(QWidget):
         quantity_lines = len(self.lines)
         if quantity_lines == 1:
             line = list(self.lines.values())[0]
-            line.set_markevery(None)
         elif quantity_lines > 1:
-            # _freq = self.calc_f_markers()
             step = int(math.sqrt(self.marker_freq))
             for line_idx, line in self.lines.items():
-                # markevery = self.get_ind_mark(x, self.x_axis_limit, _freq[line_idx])
                 markevery = self.marker_freq + line_idx * step
-
                 line.set_marker(markers[line_idx])
                 line.set_markevery(markevery)
         handles, labels = ax.get_legend_handles_labels()
@@ -325,7 +321,11 @@ class PlotArea(QWidget):
         else:
             ncols = 1
             fz = 10
-        ax.legend(handles, labels, fontsize=fz, ncols=ncols)
+        if len(handles) > 1:
+            ax.legend(handles, labels, fontsize=fz, ncols=ncols)
+        else:
+            ax.legend().remove()
+        ax.tick_params(axis="both", which="major", labelsize=12)
         self.canvas.draw_idle()
 
     def get_current_params(self):
@@ -471,7 +471,10 @@ class PlotArea(QWidget):
 
         # Update legend
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, labels, fontsize=10)
+        if len(handles) > 1:
+            ax.legend(handles, labels, fontsize=10)
+        else:
+            ax.legend().remove()
         ax.grid(True, which="major", axis="both", linestyle="--", linewidth=0.5)
 
         self.update_marker_frequency()
@@ -590,18 +593,28 @@ class PlotArea(QWidget):
 
     def remove_line(self, combo_idx: int):
         """Удаляет линию по индексу комбобокса"""
+        if not self.lines:
+            return
         if combo_idx in self.lines:
             line = self.lines[combo_idx]
             line.remove()
             del self.lines[combo_idx]
         handles, labels = self.canvas.ax.get_legend_handles_labels()
-        if len(handles) >=7:
-            ncols = 2
-            fz = 9
+        if len(handles) > 1:
+            if len(handles) >=7:
+                ncols = 2
+                fz = 9
+            else:
+                ncols = 1
+                fz = 10
+            self.canvas.ax.legend(handles, labels, fontsize = fz, ncols = ncols)
         else:
-            ncols = 1
-            fz = 10
-        self.canvas.ax.legend(handles, labels, fontsize = fz, ncols = ncols)
+            if not self.lines:
+                self.canvas.draw_idle()
+                return
+            line = list(self.lines.values())[0]
+            line.set_markevery(10e6)
+            self.canvas.ax.legend().remove()
         self.canvas.draw_idle()
 
     def disconnect_signals(self):
