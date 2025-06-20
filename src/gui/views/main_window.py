@@ -298,6 +298,7 @@ class MainWindow(QMainWindow):
         paste.triggered.connect(self.paste_graph)
         context_menu.addAction(paste)
         context_menu.exec_(self.stack.mapToGlobal(pos))
+        self.change_status(self.state_file_path)
 
     def copy_graph(self):
         """Копирование"""
@@ -356,7 +357,8 @@ class MainWindow(QMainWindow):
 
     def change_status(self, message):
         """Изменяет текст в статусбаре"""
-        self.statusBar.showMessage(str(message))
+        self.state_file_path = message
+        self.statusBar.showMessage(self.state_file_path)
 
     def mousePressEvent(self, event):
         """Устанавливает фокус на главное окно при клике мышью"""
