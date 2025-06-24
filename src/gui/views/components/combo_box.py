@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import QComboBox, QCompleter
 from PyQt5.QtCore import QStringListModel, Qt, pyqtSignal
 
-# model = QStringListModel
 class MyComboBox(QComboBox):
     """Кастомный выпадающий список"""
     cleared = pyqtSignal()

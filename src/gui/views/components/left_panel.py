@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QFormLayout,
-    QSizePolicy
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
@@ -44,14 +43,10 @@ class LeftPanel(QWidget):
 
             self.num_page = QLabel()
             self.num_page.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-            # self.num_page.setStyleSheet('font-size: 36px "Times New Roman"')
             self.update_label()
-
             self.lbl_layout.addWidget(self.num_page)
-            self.lbl_layout.setContentsMargins(0, 10, 0, 25)  # Убираем отступы
-
+            self.lbl_layout.setContentsMargins(0, 10, 0, 25)
             self.main_layout.addLayout(self.lbl_layout)
-
             for i in range(15):
                 form = QFormLayout()
                 form.setHorizontalSpacing(15)
@@ -67,11 +62,7 @@ class LeftPanel(QWidget):
                     "min-width: 90px;\n"
                     "}\n"
                 )
-                # lbl.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
                 combo.addItems(self.data.columns[1:])
-                # combo.setMaxVisibleItems(30)
-                # combo.setEditable(True)
-                # combo.setPlaceholderText("Параметр, кг")
                 combo.setCurrentIndex(-1)
                 combo.currentIndexChanged.connect(
                     lambda _, idx=i: self.main_window.plot_selection(idx)
@@ -80,7 +71,6 @@ class LeftPanel(QWidget):
                 combo.cleared.connect(
                     lambda idx=i: self.main_window.plot_selection(idx)
                 )
-                # combo.setMinimumWidth(400)
                 self.combos.append(combo)
                 form.addRow(lbl, combo)
             logger.info("Интерфейс LeftPanel успешно инициализирован")

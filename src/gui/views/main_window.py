@@ -8,8 +8,8 @@ import sys
 import os
 import yaml
 import re
-
 from pathlib import Path
+from collections import Counter
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -41,8 +41,7 @@ from src.core.constants import (
     DEFAULT_DIR,
     ICONS_DIR,
 )
-
-from src.core.data_loader import load_data_from
+from src.core.data_loader import DataLoader, DublicatedColumnsError
 from src.gui.views.components.lyne_edit import MyLineEdit
 from src.gui.views.components.left_panel import LeftPanel
 from src.gui.views.components.plot_area import PlotArea
@@ -74,16 +73,16 @@ class MainWindow(QMainWindow):
     def __init__(self, version: str):
         super().__init__()
         logger.info("Инициализация MainWindow")
-        self.pages = []
-        self.params = {}
-        self.alternative_captions = {}
-        self.version = version
-        self.stack = QStackedWidget()
+        self.pages: list = []
+        self.params: dict = {}
+        self.alternative_captions: dict = {}
+        self.version: str = version
+        self.stack: QWidget = QStackedWidget()
         self.setCentralWidget(self.stack)
         self.setStyleSheet(STACK_WIDGET_STYLE)
         self.current_page = 0
         self.data_file_path = DEFAULT_FILE_PATH
-        self.data = load_data_from(self.data_file_path, ENCODING)
+        self.data = DataLoader.default_data
         self.init_ui()
         logger.info("Интерфейс MainWindow успешно инициализирован")
         reply = QMessageBox.question(
@@ -303,7 +302,7 @@ class MainWindow(QMainWindow):
     def copy_graph(self):
         """Копирование"""
         id_graph = f"graph_{self.current_page}"
-        alt_caption = self.alternative_captions.get(id_graph, '')
+        alt_caption = self.alternative_captions.get(id_graph, "")
         self.buffer.copy(self.pages[self.current_page], alt_caption)
 
     def paste_graph(self):
@@ -355,7 +354,7 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         self.center()
 
-    def change_status(self, message):
+    def change_status(self, message: str):
         """Изменяет текст в статусбаре"""
         self.state_file_path = message
         self.statusBar.showMessage(self.state_file_path)
@@ -375,22 +374,17 @@ class MainWindow(QMainWindow):
                     state = yaml.load(f, Loader=yaml.FullLoader)
                     file_path = state.get("data_file_path", DEFAULT_FILE_PATH)
                     self.path_ent.setText(file_path)
-            self.data = load_data_from(file_path, ENCODING)
-            if isinstance(self.data, str):
-                msg = MessageWindow(self.data)
-                msg.exec_()
-            for page in self.pages:
-                for combo in page["left"].combos:
-                    combo.clear()
-                    combo.blockSignals(True)
-                    combo._original_items = []
-                    combo.addItems(self.data.columns[1:])
-                    combo.setCurrentIndex(-1)
-                    combo.blockSignals(False)
-                page["right"].data = self.data
-                page["right"].clear_graph()
-
-                self.update_graph()
+            self.data = DataLoader(path=file_path, enc=ENCODING).get_data()
+            self.update_pages()
+        except DublicatedColumnsError as e:
+            logger.error(f"Файл данных содержит дубликаты: {e.dublicated_columns}")
+            msg = MessageWindow(
+                text=f"Набор данных содержит дубликаты параметров",
+                detText=f"{e.dublicated_columns}",
+            )
+            msg.exec_()
+            self.data = DataLoader.default_data
+            self.update_pages()
         except FileNotFoundError:
             logger.error(f"Файл данных не найден: {file_path}")
             QMessageBox.critical(self, "Ошибка", f"Файл данных не найден: {file_path}")
@@ -640,6 +634,19 @@ class MainWindow(QMainWindow):
         self.init_context_menu()
         logger.info(f"Добавлена страница №{self.current_page + 1}")
 
+    def update_pages(self):
+        for page in self.pages:
+            for combo in page["left"].combos:
+                combo.clear()
+                combo.blockSignals(True)
+                combo._original_items = []
+                combo.addItems(self.data.columns[1:])
+                combo.setCurrentIndex(-1)
+                combo.blockSignals(False)
+            page["right"].data = self.data
+            page["right"].clear_graph()
+            self.update_graph()
+
     def update_buttons(self):
         self.prev_page_act.setEnabled(self.current_page > 0)
         self.next_page_act.setEnabled(self.current_page < len(self.pages) - 1)
@@ -759,29 +766,22 @@ class MainWindow(QMainWindow):
             progress = MyProgressDialog(title="Загрузка состояния", parent=self)
             progress.show()
             QApplication.processEvents()
-
             with open(file_path, "r", encoding=ENCODING) as f:
                 state = yaml.load(f, Loader=yaml.FullLoader)
-
             # 1. Очистка текущего состояния
             while self.pages:
                 page = self.pages.pop()
                 self.stack.removeWidget(page["widget"])
-                QApplication.processEvents()
-
+            QApplication.processEvents()
             # 2. Загрузка данных
             self.path_ent.blockSignals(True)
             self.data_file_path = state.get("data_file_path", DEFAULT_FILE_PATH)
             self.params = state.get("_Word", {})
             self.path_ent.setText(self.data_file_path)
             self.path_ent.blockSignals(False)
-            self.data = load_data_from(self.data_file_path, ENCODING)
+            self.data = DataLoader(self.data_file_path, ENCODING).get_data()
             self.state_additional_data = state.get("_Additional_data", [])
             self.unpuck_additional_data(self.state_additional_data)
-            if isinstance(self.data, str):
-                msg = MessageWindow(self.data)
-                msg.exec_()
-                raise Exception
             self.alternative_captions = {}
 
             # 3. Воссоздание страниц
@@ -791,17 +791,13 @@ class MainWindow(QMainWindow):
                 progress.setValue(i)
                 progress.setLabelText(f"Загрузка страницы {i}/{total_pages}")
                 QApplication.processEvents()
-
                 if progress.wasCanceled():
                     break
-
                 self.current_page = 0
                 self.add_page()
                 current_page = self.pages[-1]
-
                 # Устанавливаем ID графика
                 current_page["id"] = page_state.get("id", f"graph_{i}")
-
                 # Загрузка параметров правой части
                 current_page["right"].x_settings.setCurrentText(
                     page_state["Axis_settings"]["X"]
@@ -845,12 +841,23 @@ class MainWindow(QMainWindow):
             self.write_path(file_path)
             self.change_status(file_path)
             logger.info("Состояние успешно загружено")
-
+        except DublicatedColumnsError as e:
+            logger.error(f"Файл данных содержит дубликаты: {e.dublicated_columns}")
+            msg = MessageWindow(
+                text=f"Набор данных содержит дубликаты параметров",
+                detText=f"{e.dublicated_columns}",
+            )
+            msg.exec_()
+            self.add_page()
+        except FileNotFoundError:
+            logger.error(f"Файл данных не найден: {self.data_file_path}")
+            QMessageBox.critical(
+                self, "Ошибка", f"Файл данных не найден: {self.data_file_path}"
+            )
+            self.add_page()
+            return
         except Exception as e:
-            if isinstance(e, FileNotFoundError):
-                return
-            else:
-                QMessageBox.critical(self, "Ошибка", f"Ошибка загрузки: {str(e)}")
+            QMessageBox.critical(self, "Ошибка", f"Ошибка загрузки: {str(e)}")
             logger.error(f"Ошибка при загрузке состояния: {str(e)}", exc_info=True)
         finally:
             progress.close()
@@ -966,8 +973,8 @@ class MainWindow(QMainWindow):
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
 
-        path = Path(self.path_ent.text()).resolve()
-        if path:
+        path = Path(SAVE_FILE.read_text()).resolve()
+        if path.exists():
             home_dir = Path(path).parent.as_posix()
         else:
             home_dir = os.path.expanduser(DEFAULT_DIR)
@@ -1086,6 +1093,8 @@ class MainWindow(QMainWindow):
         """Очистка главного окна от всех виджетов"""
         for page in self.pages:
             self.stack.removeWidget(page["widget"])
+        self.data = DataLoader.default_data
+        self.update_pages()
         self.init_context_menu()
 
     def show_data(self):

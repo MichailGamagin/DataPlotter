@@ -1,7 +1,8 @@
 import os
 import math
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -95,7 +96,6 @@ class PlotArea(QWidget):
     def __init__(self, data: pd.DataFrame, main_window, parent=None):
         super().__init__(parent)
         logger.info("Инициализация PlotArea")
-
         self.lines = {}
         self.data = data
         self.main_window = main_window
@@ -105,7 +105,6 @@ class PlotArea(QWidget):
     def init_ui(self):
         logger.info("Инициализация пользовательского интерфейса PlotArea")
         self.main_layout = QVBoxLayout(self)
-
         # Top controls
         self.top_controls_panel = QWidget()
         self.top_controls_panel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -113,7 +112,6 @@ class PlotArea(QWidget):
         self.top_controls_layout.setContentsMargins(0, 0, 0, 0)
         self.top_controls_layout.setVerticalSpacing(10)
         self.top_controls_layout.setHorizontalSpacing(10)
-
         # Создаем виджеты
         # Обозначение оси Y
         group_lbl_y = QLabel("Обозначение Y:")
@@ -128,7 +126,6 @@ class PlotArea(QWidget):
         self.group.setEditable(True)
         self.group.setCurrentIndex(-1)
         self.group.currentTextChanged.connect(self.main_window.update_graph)
-
         # Размерность
         sizing_lbl_y = QLabel("Размерность Y:")
         sizing_lbl_y.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -139,7 +136,6 @@ class PlotArea(QWidget):
         self.sizing_cmb.setEditable(True)
         self.sizing_cmb.setCurrentIndex(-1)
         self.sizing_cmb.currentTextChanged.connect(self.main_window.update_graph)
-
         # Настройка оси X
         x_ax_settings_lbl = QLabel("Настройка оси X:")
         x_ax_settings_lbl.setToolTip(
@@ -174,18 +170,15 @@ class PlotArea(QWidget):
         self.group_x.setEditable(True)
         self.group_x.currentTextChanged.connect(self.main_window.update_graph)
         self.group_x.setCurrentIndex(0)
-
         # Настройка оси Y
         y_ax_settings_lbl = QLabel("Настройка оси Y:")
         y_ax_settings_lbl.setToolTip("Формат: min,max или auto\nПример: '0,100.5'")
         y_ax_settings_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         y_ax_settings_lbl.setStyleSheet(LABEL_STYLE)
-
         self.y_settings = QLineEdit()
         self.y_settings.setText("auto")
         self.y_settings.setStyleSheet(LINE_EDIT_STYLE)
         self.y_settings.editingFinished.connect(self.change_y_settings)
-
         # Распределение элементов по сетке
         self.top_controls_layout.addWidget(y_ax_settings_lbl, 0, 0, 1, 1)
         self.top_controls_layout.addWidget(self.y_settings, 0, 1, 1, 1)
@@ -193,59 +186,48 @@ class PlotArea(QWidget):
         self.top_controls_layout.addWidget(self.group, 1, 1, 1, 1)
         self.top_controls_layout.addWidget(sizing_lbl_y, 2, 0, 1, 1)
         self.top_controls_layout.addWidget(self.sizing_cmb, 2, 1, 1, 1)
-
         self.top_controls_layout.addWidget(x_ax_settings_lbl, 0, 2, 1, 1)
         self.top_controls_layout.addWidget(self.x_settings, 0, 3, 1, 1)
         self.top_controls_layout.addWidget(group_lbl_x, 1, 2, 1, 1)
         self.top_controls_layout.addWidget(sizing_lbl_x, 2, 2, 1, 1)
         self.top_controls_layout.addWidget(self.sizing_cmb_x, 1, 3, 1, 1)
         self.top_controls_layout.addWidget(self.group_x, 2, 3, 1, 1)
-
         marker_lbl = QLabel("Частота маркера:")
         marker_lbl.setToolTip("Устанавливает частоту маркеров\nна всех линиях графика")
         marker_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         marker_lbl.setStyleSheet(LABEL_STYLE)
-
         self.markers = QComboBox()
         self.markers.setStyleSheet(COMBO_STYLE)
         self.markers.addItems(["auto", "300", "600", "2000", "3000"])
         self.markers.setEditable(True)
         self.markers.setCurrentIndex(0)
         self.markers.currentTextChanged.connect(self.update_marker_frequency)
-
         x_spacing_grid_lbl = QLabel("Линии сетки:")
         x_spacing_grid_lbl.setToolTip(
             "Устанавливает количество вертикальных\nлиний сетки на графике"
         )
         x_spacing_grid_lbl.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         x_spacing_grid_lbl.setStyleSheet(LABEL_STYLE)
-
         self.x_spacing_grid_spinBox = QSpinBox()
         self.x_spacing_grid_spinBox.setValue(4)
         self.x_spacing_grid_spinBox.setMinimum(2)
         self.x_spacing_grid_spinBox.setStyleSheet(SPIN_BOX_STYLE)
         self.x_spacing_grid_spinBox.valueChanged.connect(self.change_x_settings)
-
         self.top_controls_layout.addWidget(marker_lbl, 0, 4, 1, 1)
         self.top_controls_layout.addWidget(self.markers, 0, 5, 1, 1)
         self.top_controls_layout.addWidget(x_spacing_grid_lbl, 1, 4, 1, 1)
         self.top_controls_layout.addWidget(self.x_spacing_grid_spinBox, 1, 5, 1, 1)
-
         # Добавляем панель в основной макет
         self.main_layout.addWidget(self.top_controls_panel)
-
         # Plot area
         self.bottom_panel = QWidget()
         self.plot_layout = QVBoxLayout(self.bottom_panel)
-
         # Новая панель для тулбара и кнопок
         self.toolbar_and_buttons_panel = QWidget()
         self.toolbar_and_buttons_layout = QHBoxLayout(self.toolbar_and_buttons_panel)
         self.toolbar_and_buttons_layout.setContentsMargins(0, 0, 0, 0)
-
         self.canvas = PlotCanvas()
         self.canvas.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        # self.setFixedHeight(600)
         self.toolbar = MyNavigationToolbar(
             self.canvas, self.canvas, self, coordinates=False
         )
@@ -258,23 +240,17 @@ class PlotArea(QWidget):
         self.save_btn.setToolTip("Сохранить график")
         self.save_btn.setMaximumWidth(50)
         self.toolbar.setFixedWidth(150)
-
         self.clear_btn.clicked.connect(self.clear_graph)
         self.save_btn.clicked.connect(self.save)
-
         self.plot_layout.addWidget(self.canvas)
-
         # Добавляем toolbar и кнопки в новую панель
         self.toolbar_and_buttons_layout.addWidget(self.toolbar)
-        self.toolbar_and_buttons_layout.addStretch(1)  # растягиваем вправо
+        self.toolbar_and_buttons_layout.addStretch(1)
         self.toolbar_and_buttons_layout.addWidget(self.clear_btn)
         self.toolbar_and_buttons_layout.addWidget(self.save_btn)
-
         self.plot_layout.addWidget(self.toolbar_and_buttons_panel)
         self.main_layout.addWidget(self.bottom_panel)
-
         self.init_width, self.init_hight = self.canvas.fig.get_size_inches()
-
         logger.info(
             "Инициализация пользовательского интерфейса PlotArea успешно завершена"
         )
@@ -304,7 +280,6 @@ class PlotArea(QWidget):
         """Перерисовывает маркеры на всех существующих линиях."""
         markers = MARKERS
         ax = self.canvas.ax
-
         quantity_lines = len(self.lines)
         if quantity_lines == 1:
             line = list(self.lines.values())[0]
@@ -340,7 +315,6 @@ class PlotArea(QWidget):
         return params
 
     def vis_x_label_text(self):
-        # ax.set_xlabel(r"$\frac{t}{\text{с}}$", loc="right")
         unit = self.sizing_cmb_x.currentText()
         if unit == "":
             unit_tex = ""
@@ -351,7 +325,6 @@ class PlotArea(QWidget):
             char_tex = ""
         else:
             char_tex = r"\text{" + char + "}"
-
         if char_tex != "" and unit_tex != "":
             x_label_text = rf"$\frac{{{unit_tex}}}{{{char_tex}}}$"
         elif char_tex != "" and unit_tex == "":
@@ -366,7 +339,6 @@ class PlotArea(QWidget):
         """
         Формирует текст в формате Latex для подписи оси Y .
         """
-
         greek_alf = {
             "alpha": r"\alpha",
             "beta": r"\beta",
@@ -391,7 +363,6 @@ class PlotArea(QWidget):
             unit_tex = (
                 r"\text{" + unit + "}"
             )  # Если пользователь ввел свое значение, экранируем его как текст.
-
         char = self.group.currentText()
         if char == "":
             char_tex = ""
@@ -423,8 +394,7 @@ class PlotArea(QWidget):
 
         colors = COLORS
         ax = self.canvas.ax
-
-        ax.tick_params(axis="both", which="major", labelsize=10)
+        ax.tick_params(axis="both", which="major", labelsize=12)
         ax.xaxis.label.set_fontsize(14)
         ax.yaxis.label.set_fontsize(14)
         x_label_text = self.vis_x_label_text()
@@ -437,29 +407,20 @@ class PlotArea(QWidget):
             labelpad=-10,
         )
         time = self.data.columns[0]
-
         self.change_x_settings()
         self.change_y_settings()
-
-        # настройка меток на оси X
-        # ax.xaxis.set_major_locator(plt.MaxNLocator(5))  # 5 меток максимум
-
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda val, loc: f"{val:.0f}"))
         ax.yaxis.set_major_formatter(plt.ScalarFormatter(useMathText = True, useOffset=False))
-
-        # Remove existing line if present
         if line_idx in self.lines:
             self.lines[line_idx].remove()
             del self.lines[line_idx]
         ax.relim()
         ax.autoscale_view()
-
         x = self.data[time]
         if column_name in self.data.columns:
             y = self.data[column_name]
         else:
             return
-        # Create new plot
         (line,) = ax.plot(
             x,
             y,
@@ -468,7 +429,6 @@ class PlotArea(QWidget):
             linewidth=1.5,
         )
         self.lines[line_idx] = line
-
         # Update legend
         handles, labels = ax.get_legend_handles_labels()
         if len(handles) > 1:
@@ -476,7 +436,6 @@ class PlotArea(QWidget):
         else:
             ax.legend().remove()
         ax.grid(True, which="major", axis="both", linestyle="--", linewidth=0.5)
-
         self.update_marker_frequency()
         self.canvas.draw_idle()
         QTimer.singleShot(0, self.toolbar.save_current_view)
@@ -497,7 +456,7 @@ class PlotArea(QWidget):
                 plt.MultipleLocator(
                     self.x_axis_limit / self.x_spacing_grid_spinBox.value()
                 )
-            )  # 5 меток максимум
+            )
             self.canvas.draw_idle()
         except ValueError:
             msg = MessageWindow(

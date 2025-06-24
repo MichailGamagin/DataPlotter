@@ -31,4 +31,3 @@ if __name__ == "__main__":
     msg.exec_()
     print(msg.text, msg.detText)
     sys.exit(app.exec_())
-    # msg.exec_()

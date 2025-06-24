@@ -1,8 +1,8 @@
-import sys
 import os
+from typing import Optional, Any, Callable
+
 import pandas as pd
 import numpy as np
-from typing import Optional, Any, Callable
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QAbstractTableModel, pyqtSignal
 from PyQt5.QtWidgets import (
@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QTableView,
 )
 from PyQt5.QtGui import QIcon
+
 from src.utils.logger import Logger
 from src.core.constants import ICONS_DIR
 
@@ -63,7 +64,6 @@ class DataOperations:
         Вычисляет интеграл параметра по времени
         """
         try:
-            # вычисляем площадь для каждой точки
             result = []
             for i in range(len(df)):
                 area = np.trapezoid(
@@ -102,13 +102,11 @@ class DataModel(QAbstractTableModel):
     def _init_context_menu(self) -> None:
         """Инициализация контекстного меню"""
         self.context_menu = QMenu()
-
         # Подменю для арифметических операций
         self.arithmetic_menu = QMenu("Арифметические операции")
         self.arithmetic_menu.setIcon(
             QIcon(os.path.join(ICONS_DIR, "icons", "arifmetic50x50.png"))
         )
-
         # Действия для операций
         self.add_constant_action = QAction(
             QIcon(os.path.join(ICONS_DIR, "icons", "plus-64.png")),
@@ -400,11 +398,9 @@ class DataTableView(QTableView):
         header.setDefaultSectionSize(250)
         header.setWhatsThis("Таблица данных")
         self.verticalHeader().setVisible(True)
-
         # Настройка выделения
         self.setSelectionBehavior(QTableView.SelectRows)
         self.setSelectionMode(QTableView.SingleSelection)
-
         # Настройка контекстного меню
         self.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.horizontalHeader().customContextMenuRequested.connect(
@@ -425,7 +421,6 @@ class DataTableView(QTableView):
         # Получаем индекс столбца под курсором
         header = self.horizontalHeader()
         index = header.logicalIndexAt(pos)
-        # Показываем меню
         global_pos = header.mapToGlobal(pos)
         self.model.show_context_menu(global_pos, index)
 
@@ -453,22 +448,18 @@ class DataTableView(QTableView):
                 new_columns = list(
                     set(current_data.columns) - set(self._original_data.columns)
                 )
-
                 if new_columns:
                     # Добавляем только новые столбцы к оригинальным данным
                     for col in new_columns:
                         self.parent.data[col] = current_data[col]
                 last_index = len(self.parent.data.columns)
-                # Обновляем все страницы
+                # Обновляем все страницы с комбобоксами и графиками
                 for page in self.parent.pages:
-                    # Обновляем комбобоксы
                     for combo in page["left"].combos:
                         combo.blockSignals(True)
                         combo.insertItems(last_index, new_columns)
                         combo.blockSignals(False)
-                    # Обновляем данные в графике
                     page["right"].data = self.parent.data
-                # Обновляем текущий график
                 self.parent.update_graph()
                 event.accept()
             elif reply == QMessageBox.Discard:

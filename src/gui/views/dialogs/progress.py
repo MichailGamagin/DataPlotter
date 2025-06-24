@@ -33,10 +33,9 @@ class MyProgressDialog(QProgressDialog):
         self.setWindowModality(Qt.ApplicationModal)
         self.setAutoClose(True)
         self.setAutoReset(True)
-        self.setMinimumDuration(0) # чтобы сразу показывался
-
+        self.setMinimumDuration(0)
         self.bar = QProgressBar()
-        self.bar.setTextVisible(False)  # Показываем текст прогресса
+        self.bar.setTextVisible(False)
         self.bar.setFixedSize(620, 30)
         self.bar.setStyleSheet(STYLE_PROGRESS_BAR)
         self.bar.setValue(min_val)

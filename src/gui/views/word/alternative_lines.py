@@ -35,7 +35,6 @@ class AlternativeLines(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(10)
-
         # --- Рабочая область (QTreeWidget) ---
         self.work_space = QtWidgets.QTreeWidget()
         self.work_space.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
@@ -49,7 +48,6 @@ class AlternativeLines(QtWidgets.QWidget):
         self.work_space.headerItem().setFont(0, font) 
         self.work_space.headerItem().setTextAlignment(0, QtCore.Qt.AlignCenter)
         self.work_space.itemClicked.connect(self.on_graph_clicked)
-
         # Заполняем QTreeWidget
         root = QtWidgets.QTreeWidgetItem(self.work_space)
         root.setText(0, "Графики")
@@ -59,13 +57,11 @@ class AlternativeLines(QtWidgets.QWidget):
             item.setText(0, final_name)
 
         main_layout.addWidget(self.work_space)
-
         # --- Stacked Widget ---
         self.stack = QtWidgets.QStackedWidget()
         self.stack.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.stack.setMinimumWidth(930)
         self.stack.setStyleSheet(ALTERNATIVE_LINES_STACK_STYLE)
-
         # Динамически создаем страницы
         self.create_pages()
         self.set_text_to_textEdit()
@@ -82,25 +78,19 @@ class AlternativeLines(QtWidgets.QWidget):
         """Метод добавления страницы"""
         page_indx = graph_num
         page = QtWidgets.QWidget()
-
         # Количество полей ввода в главном окне левой панели на соответствующей странице
         count_field = len(self.pages[page_indx]["left"].combos)
-
         page_layout = QtWidgets.QVBoxLayout(page)
         page_layout.setContentsMargins(10, 10, 10, 10)
         page_layout.setSpacing(10)
-
         # Номер графика
         num_graphs_layout = QtWidgets.QHBoxLayout()
         num_graph_lbl = QtWidgets.QLabel(f'График №{graph_num+1}')
         num_graph_lbl.setFont(QtGui.QFont("Yu Gothic UI", 18))
-
         self.headers.append(num_graph_lbl.text())
-
         num_graphs_layout.addWidget(num_graph_lbl)
         num_graphs_layout.addStretch(1)
         page_layout.addLayout(num_graphs_layout)
-
         # "Действующее название" и "Альтернативное название"
         caption_layout = QtWidgets.QHBoxLayout()
         caption_layout.setSpacing(15)
@@ -121,7 +111,6 @@ class AlternativeLines(QtWidgets.QWidget):
         alternative_name_lbl.setAlignment(QtCore.Qt.AlignCenter)
         caption_layout.addWidget(alternative_name_lbl)
         page_layout.addLayout(caption_layout)
-
         # Линии и метки
         lines_and_text_layout = QtWidgets.QHBoxLayout()
         lines_and_text_layout.setContentsMargins(5, 5, 5, 5)
@@ -144,9 +133,7 @@ class AlternativeLines(QtWidgets.QWidget):
         textEdit.setMaximumWidth(426)
         self.textEdits[f"{page_indx}"] = textEdit
         lines_and_text_layout.addWidget(textEdit)
-
         page_layout.addLayout(lines_and_text_layout)
-
         # Кнопки
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.addStretch(1)
@@ -154,7 +141,6 @@ class AlternativeLines(QtWidgets.QWidget):
         save_btn.clicked.connect(self.save)
         button_layout.addWidget(save_btn)
         page_layout.addLayout(button_layout)
-
         self.stack.addWidget(page)
 
     def on_graph_clicked(self, item, column=0):
