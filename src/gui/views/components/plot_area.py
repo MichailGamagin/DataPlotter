@@ -60,14 +60,28 @@ class PlotCanvas(FigureCanvas, QWidget):
         self.fig = Figure(figsize=(9, 5))
         self.ax = self.fig.add_subplot(111)
         super().__init__(self.fig)
-        self.ax.grid(True)
+        self.ax.grid(
+            True,
+            which="major",
+            axis="both",
+            linestyle="-",
+            linewidth=0.5,
+            color="black",
+        )
         self.setParent(parent)
         logger.info("Инициализация PlotCanvas успешно завершена")
 
     def clear_plot(self):
         """Метод очистки графика"""
         self.ax.cla()
-        self.ax.grid(True)
+        self.ax.grid(
+            True,
+            which="major",
+            axis="both",
+            linestyle="-",
+            linewidth=0.5,
+            color="black",
+        )
         self.draw()
 
 
@@ -154,9 +168,7 @@ class PlotArea(QWidget):
         self.x_settings.setCurrentIndex(0)
         self.x_settings.currentTextChanged.connect(self.main_window.update_graph)
         group_lbl_x = QLabel("Обозначение X:")
-        group_lbl_x.setToolTip(
-            "Буквенное обозначение времени.\nНапример: t"
-        )
+        group_lbl_x.setToolTip("Буквенное обозначение времени.\nНапример: t")
         group_lbl_x.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         group_lbl_x.setStyleSheet(LABEL_STYLE)
         sizing_lbl_x = QLabel("Размерность X:")
@@ -445,7 +457,9 @@ class PlotArea(QWidget):
         # ax.xaxis.set_major_locator(plt.MaxNLocator(5))  # 5 меток максимум
 
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda val, loc: f"{val:.0f}"))
-        ax.yaxis.set_major_formatter(plt.ScalarFormatter(useMathText = True, useOffset=False))
+        ax.yaxis.set_major_formatter(
+            plt.ScalarFormatter(useMathText=True, useOffset=False)
+        )
 
         # Remove existing line if present
         if line_idx in self.lines:
@@ -472,7 +486,6 @@ class PlotArea(QWidget):
         # Update legend
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles, labels, fontsize=10)
-        ax.grid(True, which="major", axis="both", linestyle="--", linewidth=0.5)
 
         self.update_marker_frequency()
         self.canvas.draw_idle()
@@ -576,7 +589,9 @@ class PlotArea(QWidget):
         current_width, current_hight = self.canvas.fig.get_size_inches()
         self.canvas.fig.set_size_inches(self.init_width, self.init_hight)
 
-        filename = f"/grf_{number} из {len(self.main_window.pages)}_{int(x_axis_limit)}s.png"
+        filename = (
+            f"/grf_{number} из {len(self.main_window.pages)}_{int(x_axis_limit)}s.png"
+        )
         self.canvas.figure.savefig(directory + filename, format="png", dpi=600)
         self.canvas.figure.set_size_inches(current_width, current_hight)
         QMessageBox.information(
@@ -584,9 +599,7 @@ class PlotArea(QWidget):
             "Успех",
             f"График успешно сохранен в директорию:\n{directory + filename}",
         )
-        logger.info(
-            f"График успешно сохранен в директорию: {directory + filename}"
-        )
+        logger.info(f"График успешно сохранен в директорию: {directory + filename}")
 
     def remove_line(self, combo_idx: int):
         """Удаляет линию по индексу комбобокса"""
@@ -595,13 +608,13 @@ class PlotArea(QWidget):
             line.remove()
             del self.lines[combo_idx]
         handles, labels = self.canvas.ax.get_legend_handles_labels()
-        if len(handles) >=7:
+        if len(handles) >= 7:
             ncols = 2
             fz = 9
         else:
             ncols = 1
             fz = 10
-        self.canvas.ax.legend(handles, labels, fontsize = fz, ncols = ncols)
+        self.canvas.ax.legend(handles, labels, fontsize=fz, ncols=ncols)
         self.canvas.draw_idle()
 
     def disconnect_signals(self):
