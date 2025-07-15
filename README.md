@@ -36,3 +36,7 @@ python main.py
 - PyQt5
 - pandas
 - matplotlib 
+- numpy
+- pillow
+- python-docx
+- pyYaml
