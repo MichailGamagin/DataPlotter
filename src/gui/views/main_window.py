@@ -88,13 +88,14 @@ class MainWindow(QMainWindow):
         reply = QMessageBox.question(
             self,
             "Загрузить последний файл состояния?",
-            f"Загрузить последний файл состояния?",
+            f"Загрузить последний файл состояния?\nАдрес: {SAVE_FILE.read_text()}",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.Yes,
         )
         if reply != QMessageBox.No:
             self._load_state()
         self.init_context_menu()
+        self.change_status("Файл состояния не выбран")
 
     def init_ui(self):
         logger.info(f"Инициализация пользовательского интерфейса MainWindow")
@@ -297,7 +298,6 @@ class MainWindow(QMainWindow):
         paste.triggered.connect(self.paste_graph)
         context_menu.addAction(paste)
         context_menu.exec_(self.stack.mapToGlobal(pos))
-        self.change_status(self.state_file_path)
 
     def copy_graph(self):
         """Копирование"""

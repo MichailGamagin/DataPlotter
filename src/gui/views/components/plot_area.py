@@ -451,7 +451,7 @@ class PlotArea(QWidget):
             ax.legend(handles, labels, fontsize=10)
         else:
             ax.legend().remove()
-        ax.grid(True, which="major", axis="both", linestyle="--", linewidth=0.5)
+        ax.grid(True, which="major", axis="both", linestyle="-", linewidth=0.5)
         self.update_marker_frequency()
         self.canvas.draw_idle()
         QTimer.singleShot(0, self.toolbar.save_current_view)
