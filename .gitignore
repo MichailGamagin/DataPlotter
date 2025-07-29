@@ -14,7 +14,7 @@ data/samples
 data/
 resources/icons
 resources/ui
-resources/last_save
+resources/last_save/*.txt
 # Distribution / packaging
 .Python
 build/
