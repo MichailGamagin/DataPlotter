@@ -21,7 +21,7 @@ class DataLoader:
         "Время, с": np.arange(100),
         "Параметр, кг": np.arange(100),
     })
-    
+
     def __init__(self, path: str | Path, enc: str) -> None:
         if Path(path).exists():
             self.path: Path = Path(path).resolve()
@@ -39,7 +39,7 @@ class DataLoader:
         counts = Counter(string_list)
         dublicates = [s for s, count in counts.items() if count > 1]
         return dublicates
-    
+
     def get_data(self) -> pd.DataFrame:
         return self.data
 
@@ -53,16 +53,17 @@ class DataLoader:
             self.data = self.data_KORSAR()
             if self.data is not None:
                 logger.info(f"Данные успешно загружены из файла: {self.path}")
-
+                return
             # Try TRAP (CSV format)
             self.data = self.data_TRAP_csv()
             if self.data is not None:
                 logger.info(f"Данные успешно загружены из файла: {self.path}")
-
+                return
             # Try LENT
             self.data = self.read_TRAP_lent()
             if self.data is not None:
                 logger.info(f"Данные успешно загружены из файла: {self.path}")
+                return
             ###
             # Тут можно вставить свою функцию для чтения нужного формата
             ###
